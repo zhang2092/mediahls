@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <title>首页 - HLS流视频</title>
+    <style>
+        .container{
+            width: 640px;
+        }
+        .container #video{
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <video id="video" controls></video>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        var video = document.getElementById('video');
+        if(Hls.isSupported()) {
+            console.log("supported");
+            var hls = new Hls();
+            hls.loadSource('http://192.168.9.252:9090/statics/clip7iilsbb2u3en7mt0/index.m3u8');
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED,function() {
+                video.play();
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            console.log("no supported");
+            video.src = 'http://192.168.9.252:9090/stream';
+            video.addEventListener('loadedmetadata',function() {
+                video.play();
+            });
+        }
+    </script>
+</body>
+
+</html>
