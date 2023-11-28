@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"html/template"
+	"log"
 	"net/http"
 	"time"
 
@@ -11,14 +12,16 @@ import (
 )
 
 func (server *Server) registerView(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("web/templates/register.html.tmpl")
+	t, err := template.ParseFiles("web/templates/user/register.html.tmpl", "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
 	if err != nil {
+		log.Printf("%v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	err = t.Execute(w, nil)
 	if err != nil {
+		log.Printf("%v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -80,7 +83,7 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) loginView(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("web/templates/login.html.tmpl")
+	t, err := template.ParseFiles("web/templates/user/login.html.tmpl", "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
