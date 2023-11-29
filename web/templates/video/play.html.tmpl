@@ -1,0 +1,38 @@
+{{template "header" .}}
+<div class="container-fluid flex justify-content">
+    <div class="main">
+        <h6 style="margin-top: 20px;margin-bottom: 10px;">正在播放 &lt;&lt;Git - Div Rhino&gt;&gt;</h6>
+        <video id="video" controls width="100%"></video>
+        <div class="tip-box">
+            <div class="tip-icon">
+                <svg focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="InfoOutlinedIcon">
+                    <path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20, 12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10, 10 0 0,0 12,2M11,17H13V11H11V17Z"></path>
+                </svg>
+            </div>
+            <div class="tip-info">
+                <p>空格键播放/暂停，上下箭头调整音量，左右箭头调整播放进度。播放器顶部停止按钮可以关闭播放器，回到详情页面。</p>
+                <p>如果播放遇到问题，请尝试切换播放源。</p>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/statics/js/hls.min.js"></script>
+<script>
+    var video = document.getElementById('video');
+    if(Hls.isSupported()) {
+        console.log("supported");
+        var hls = new Hls();
+        hls.loadSource('{{.Url}}');
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED,function() {
+            //video.play();
+        });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        console.log("no supported");
+        video.src = '{{.Url}}';
+        video.addEventListener('loadedmetadata',function() {
+            //video.play();
+        });
+    }
+</script>
+{{template "footer" .}}

@@ -1,0 +1,9 @@
+{{template "header" .}}
+<div class="container">
+    <form id="form" enctype="multipart/form-data" action="/upload" method="POST">
+        <label for="avatar">请选择文件:</label><br>
+        <input type="file" id="file" name="file" /><br>
+        <button class="button" type="submit">提交</button>
+    </form>
+</div>
+{{template "footer" .}}

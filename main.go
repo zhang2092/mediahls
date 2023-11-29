@@ -30,4 +30,13 @@ func main() {
 	}
 
 	server.Start(conn)
+
+	// s := xid.New().String()
+	// log.Println(s)
+	// err := convert.ConvertHLS("media/"+s+"/", "upload/20231129/o6e6qKaMdk0VC1Ys2SHnr.mp4")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// log.Println("ok")
 }

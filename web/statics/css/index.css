@@ -1,0 +1,83 @@
+@charset "utf-8";
+
+.flex {
+    display: flex;
+}
+
+.flex-row {
+    flex-direction: row;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.justify-content {
+    justify-content: center;
+}
+
+.align-items {
+    align-items: center;
+}
+
+.navbar-wh {
+    padding: 0.2rem 1.6rem;
+    border-bottom: 1px solid rgba(0,0,0,.12);
+}
+
+.navbar-brand-fs {
+    font-size: 1rem;
+}
+
+.logo {
+    width: 2.2rem;
+    height: 2.2rem;
+    fill: currentColor;
+    /* color: #f44336; */
+    color: #007bff;
+}
+
+.oauth {
+    align-items: center;
+    list-style-type: none;
+    height: 40px;
+    margin-bottom: 0;
+}
+
+.oauth li {
+    margin-left: 10px;
+}
+
+.main {
+    max-width: 1280px;
+    width: 100%;
+    padding-bottom: 60px;
+}
+
+.tip-box {
+    width: 100%;
+    background-color: rgb(229, 246, 253);
+    padding: 1rem;
+    border-radius: 3px;
+    display: flex;
+    margin-top: 10px;
+}
+
+.tip-box .tip-icon {
+    width: 24px;
+    margin-right: 12px;
+}
+
+.tip-box .tip-icon svg{
+    fill: currentColor;
+    color: #007bff;
+}
+
+.tip-box .tip-info p {
+    letter-spacing: 0.00938em;
+    font-size: 13px;
+    font-weight: 400;
+    color:rgb(1, 67, 97);
+    margin-bottom: 0;
+    line-height: 24px;
+}

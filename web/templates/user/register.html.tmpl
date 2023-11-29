@@ -1,3 +1,38 @@
 {{template "header" .}}
-<h1>注册页面</h1>
+<div class="container">
+    <div class="flex flex-column align-items row py-md-5">
+      <h1>注册</h1>
+      <div class="col-sm-5 py-md-5">
+        <form action="/register" method="post">
+            <div class="form-group">
+                <label for="email">邮箱</label>
+                <input type="email" name="email" class="form-control" required id="email" value="{{.Email}}" aria-describedby="emailValid">
+                {{if .EmailErr}}
+                <small id="emailValid" style="color: #f44336;" class="form-text">{{.EmailErr}}</small>
+                {{end}}
+            </div>
+            <div class="form-group">
+                <label for="username">名称</label>
+                <input type="text" name="username" class="form-control" required id="username" value="{{.Username}}" style="width: 100%;" aria-describedby="usernameValid">
+                {{if .UsernameErr}}
+                <small id="usernameValid" style="color: #f44336;" class="form-text">{{.UsernameErr}}</small>
+                {{end}}
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" name="password" class="form-control" required id="password" value="{{.Password}}" aria-describedby="passwordValid">
+                {{if .PasswordErr}}
+                <small id="passwordValid" style="color: #f44336;" class="form-text">{{.PasswordErr}}</small>
+                {{end}}
+            </div>
+            <button type="submit" class="btn btn-primary">提交</button>
+        </form>
+        {{if .Summary}}
+        <div class="py-md-5" style="color: #f44336;">
+            {{.Summary}}
+        </div>
+        {{end}}
+      </div>
+    </div>
+  </div>
 {{template "footer" .}}

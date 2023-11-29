@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 	"github.com/zhang2092/mediahls/internal/db"
 	"github.com/zhang2092/mediahls/internal/pkg/config"
 	"github.com/zhang2092/mediahls/internal/pkg/logger"
@@ -20,8 +21,9 @@ import (
 )
 
 type Server struct {
-	conf   *config.Config
-	router *mux.Router
+	conf         *config.Config
+	router       *mux.Router
+	secureCookie *securecookie.SecureCookie
 
 	store      db.Store
 	tokenMaker token.Maker
@@ -33,10 +35,16 @@ func NewServer(conf *config.Config, store db.Store) (*Server, error) {
 		return nil, fmt.Errorf("cannot create token maker: %w", err)
 	}
 
+	hashKey := securecookie.GenerateRandomKey(32)
+	blockKey := securecookie.GenerateRandomKey(32)
+	secureCookie := securecookie.New(hashKey, blockKey)
+	secureCookie.MaxAge(7200)
+
 	server := &Server{
-		conf:       conf,
-		store:      store,
-		tokenMaker: tokenMaker,
+		conf:         conf,
+		secureCookie: secureCookie,
+		store:        store,
+		tokenMaker:   tokenMaker,
 	}
 
 	server.setupRouter()
@@ -45,18 +53,23 @@ func NewServer(conf *config.Config, store db.Store) (*Server, error) {
 
 func (server *Server) setupRouter() {
 	router := mux.NewRouter()
+	router.Use(mux.CORSMethodMiddleware(router))
 	router.PathPrefix("/statics/").Handler(http.StripPrefix("/statics/", http.FileServer(http.Dir("web/statics"))))
 
 	router.HandleFunc("/register", server.registerView).Methods(http.MethodGet)
 	router.HandleFunc("/register", server.register).Methods(http.MethodPost)
 	router.HandleFunc("/login", server.loginView).Methods(http.MethodGet)
 	router.HandleFunc("/login", server.login).Methods(http.MethodPost)
-
+	router.HandleFunc("/logout", server.logout).Methods(http.MethodGet)
 	router.HandleFunc("/", server.home).Methods(http.MethodGet)
-
 	router.HandleFunc("/play/{xid}", server.play).Methods(http.MethodGet)
+	router.HandleFunc("/media/{xid}/stream/", server.stream).Methods(http.MethodGet)
+	router.HandleFunc("/media/{xid}/stream/{segName:index[0-9]+.ts}", server.stream).Methods(http.MethodGet)
 
-	router.HandleFunc("/upload", server.upload).Methods(http.MethodGet, http.MethodPost)
+	subRouter := router.PathPrefix("/").Subrouter()
+	subRouter.Use(server.authorizeMiddleware)
+	subRouter.HandleFunc("/upload", server.uploadView).Methods(http.MethodGet)
+	subRouter.HandleFunc("/upload", server.upload).Methods(http.MethodPost)
 
 	server.router = router
 }
