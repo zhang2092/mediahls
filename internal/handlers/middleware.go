@@ -30,14 +30,14 @@ func (server *Server) authorizeMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (server *Server) withCookie(r *http.Request) (*authorize, error) {
+func (server *Server) withCookie(r *http.Request) (*Authorize, error) {
 	cookie, err := r.Cookie(AuthorizeCookie)
 	if err != nil {
 		log.Printf("get cookie: %v", err)
 		return nil, err
 	}
 
-	u := &authorize{}
+	u := &Authorize{}
 	err = server.secureCookie.Decode(AuthorizeCookie, cookie.Value, u)
 	if err != nil {
 		log.Printf("secure decode cookie: %v", err)
@@ -47,19 +47,13 @@ func (server *Server) withCookie(r *http.Request) (*authorize, error) {
 	return u, nil
 }
 
-func withUser(ctx context.Context) *authorize {
-	var result authorize
+func withUser(ctx context.Context) Authorize {
+	var result Authorize
 	ctxValue, err := convert.ToByteE(ctx.Value(ContextUser))
-	log.Printf("ctx: %s", ctxValue)
 	if err != nil {
-		log.Printf("1: %v", err)
-		return nil
-	}
-	err = json.Unmarshal(ctxValue, &result)
-	if err != nil {
-		log.Printf("2: %v", err)
-		return nil
+		return result
 	}
 
-	return &result
+	json.Unmarshal(ctxValue, &result)
+	return result
 }

@@ -15,3 +15,19 @@ type User struct {
 	Email          string    `json:"email"`
 	CreatedAt      time.Time `json:"created_at"`
 }
+
+type Video struct {
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Images      string    `json:"images"`
+	OriginLink  string    `json:"origin_link"`
+	PlayLink    string    `json:"play_link"`
+	Status      int32     `json:"status"`
+	IsDeleted   bool      `json:"is_deleted"`
+	UserID      string    `json:"user_id"`
+	CreateAt    time.Time `json:"create_at"`
+	CreateBy    string    `json:"create_by"`
+	UpdateAt    time.Time `json:"update_at"`
+	UpdateBy    string    `json:"update_by"`
+}

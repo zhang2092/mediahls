@@ -1,51 +1,23 @@
-<!-- <!DOCTYPE html>
-<html lang="zh-CN">
-
-<head>
-    <meta charset="utf-8">
-    <title>首页 - HLS流视频</title>
-    <style>
-        .container{
-            width: 640px;
-        }
-        .container #video{
-            width: 100%;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <video id="video" controls></video>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script>
-        var video = document.getElementById('video');
-        if(Hls.isSupported()) {
-            console.log("supported");
-            var hls = new Hls();
-            hls.loadSource('http://192.168.9.252:9090/statics/clip7iilsbb2u3en7mt0/index.m3u8');
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED,function() {
-                video.play();
-            });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            console.log("no supported");
-            video.src = 'http://192.168.9.252:9090/stream';
-            video.addEventListener('loadedmetadata',function() {
-                video.play();
-            });
-        }
-    </script>
-</body>
-
-</html> -->
-
 {{template "header" .}}
 <div class="container-fluid flex justify-content">
     <div class="main">
         <h3 style="margin-top: 20px;margin-bottom: 10px;">视频列表</h3>
-        
+        <div class="video-list">
+            {{range .Videos}}
+            <div class="card">
+                <img src="{{.Images}}" class="card-img-top" alt="{{.Title}}">
+                <div class="card-body">
+                    <h5 class="card-title">{{.Title}}</h5>
+                    <p class="card-text">{{.Description}}</p>
+                    <a href="/play/{{.ID}}" class="btn btn-primary">播放</a>
+                </div>
+            </div>
+            {{end}}
+        </div>
     </div>
 </div>
+{{define "js"}}
+<script>
+</script>
+{{end}}
 {{template "footer" .}}

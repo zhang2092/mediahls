@@ -55,6 +55,7 @@ func (server *Server) setupRouter() {
 	router := mux.NewRouter()
 	router.Use(mux.CORSMethodMiddleware(router))
 	router.PathPrefix("/statics/").Handler(http.StripPrefix("/statics/", http.FileServer(http.Dir("web/statics"))))
+	router.PathPrefix("/upload/imgs").Handler(http.StripPrefix("/upload/imgs/", http.FileServer(http.Dir("upload/imgs"))))
 
 	router.HandleFunc("/register", server.registerView).Methods(http.MethodGet)
 	router.HandleFunc("/register", server.register).Methods(http.MethodPost)
@@ -68,8 +69,17 @@ func (server *Server) setupRouter() {
 
 	subRouter := router.PathPrefix("/").Subrouter()
 	subRouter.Use(server.authorizeMiddleware)
-	subRouter.HandleFunc("/upload", server.uploadView).Methods(http.MethodGet)
-	subRouter.HandleFunc("/upload", server.upload).Methods(http.MethodPost)
+	subRouter.HandleFunc("/me/videos", server.videosView).Methods(http.MethodGet)
+	subRouter.HandleFunc("/me/videos/p{page}", server.videosView).Methods(http.MethodGet)
+
+	subRouter.HandleFunc("/me/videos/create", server.createVideoView).Methods(http.MethodGet)
+	subRouter.HandleFunc("/me/videos/create/{xid}", server.createVideoView).Methods(http.MethodGet)
+	subRouter.HandleFunc("/me/videos/create", server.createVideo).Methods(http.MethodPost)
+
+	subRouter.HandleFunc("/upload_image", server.uploadImage).Methods(http.MethodPost)
+	subRouter.HandleFunc("/upload_file", server.uploadVideo).Methods(http.MethodPost)
+	subRouter.HandleFunc("/transfer/{xid}", server.transferView).Methods(http.MethodGet)
+	subRouter.HandleFunc("/transfer/{xid}", server.transfer).Methods(http.MethodPost)
 
 	server.router = router
 }

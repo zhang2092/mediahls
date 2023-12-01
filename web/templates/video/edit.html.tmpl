@@ -1,0 +1,126 @@
+{{template "header" .}}
+<div class="container-fluid flex justify-content">
+    <div class="main">
+        <div class="title">
+            <h3>上传视频</h3>
+            <a href="/me/videos" class="btn btn-primary">返回列表</a>
+        </div>
+        <div class="col-sm-6 py-md-5 flex flex-column justify-content">
+            <form action="/me/videos/create" method="post">
+                {{if .ID}}
+                <div class="form-group">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">ID</span>
+                        </div>
+                        <input type="text" class="form-control" disabled value="{{.ID}}">
+                        <input type="hidden" value="{{.ID}}" name="id">
+                    </div>
+                </div>
+                {{end}}
+                <div class="form-group">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">标题</span>
+                        </div>
+                        <input type="text" name="title" class="form-control" required id="title" value="{{.Title}}"
+                            aria-describedby="titleValid">
+                    </div>
+                    {{if .TitleErr}}
+                    <small id="titleValid" style="color: #f44336;" class="form-text">{{.TitleErr}}</small>
+                    {{end}}
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">图片</span>
+                        </div>
+                        <input type="file" class="form-control" id="upload_images">
+                        <input type="button" class="btn btn-secondary" value="上传" onclick="uploadImage()" />
+                        <input type="hidden" id="images" name="images" required value="{{.Images}}" aria-describedby="imagesValid">
+                    </div>
+                    <div class="image-box" style="margin-top: 8px;">
+                        {{if .Images}}
+                        <img width="120px" src="{{.Images}}" />
+                        {{end}}
+                    </div>
+                    {{if .ImagesErr}}
+                    <small id="imagesValid" style="color: #f44336;" class="form-text">{{.ImagesErr}}</small>
+                    {{end}}
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">描述</span>
+                        </div>
+                        <textarea class="form-control" id="description" name="description" required
+                            aria-describedby="descriptionValid" rows="3">{{.Description}}</textarea>
+                    </div>
+                    {{if .DescriptionErr}}
+                    <small id="descriptionValid" style="color: #f44336;" class="form-text">{{.DescriptionErr}}</small>
+                    {{end}}
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">视频</span>
+                        </div>
+                        <input type="file" class="form-control" id="upload_video">
+                        <input type="button" class="btn btn-secondary" value="上传" onclick="uploadVideo()" />
+                        <input type="hidden" id="video" name="origin_link" required value="{{.OriginLink}}">
+                    </div>
+                    <div class="video-box" style="margin-top: 8px;">
+                        {{if .OriginLink}}
+                        <p>{{.OriginLink}}</p>
+                        {{end}}
+                    </div>
+                    <small id="upload_video_msg" style="color: #f44336;" class="form-text">
+                        {{.OriginLinkErr}}
+                    </small>
+                </div>
+                <button type="submit" class="btn btn-primary">提交</button>
+            </form>
+        </div>
+    </div>
+</div>
+{{define "js"}}
+<script>
+    function uploadImage() {
+        var files = $('#upload_images').prop('files');
+        var data = new FormData();
+        data.append('file', files[0]);
+
+        $.ajax({
+            url: '/upload_image',
+            type: 'POST',
+            data: data,
+            cache: false,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                $('#images').val(res);
+                $('.image-box').append('<img width="120px" src="' + res + '" />');
+            }
+        })
+    }
+    function uploadVideo() {
+        var files = $('#upload_video').prop('files');
+        var data = new FormData();
+        data.append('file', files[0]);
+
+        $.ajax({
+            url: '/upload_file',
+            type: 'POST',
+            data: data,
+            cache: false,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                $('#video').val(res);
+                $('#upload_video_msg').html('上传成功')
+            }
+        })
+    }
+</script>
+{{end}}
+{{template "footer" .}}

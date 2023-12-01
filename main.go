@@ -11,6 +11,10 @@ import (
 )
 
 func main() {
+	// filename, _ := nanoId.Nanoid()
+	// log.Println(filename)
+	// return
+
 	config, err := config.LoadConfig(".")
 	if err != nil {
 		log.Fatal("cannot load config: ", err)

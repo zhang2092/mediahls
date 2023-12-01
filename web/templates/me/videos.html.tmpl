@@ -1,0 +1,73 @@
+{{template "header" .}}
+<div class="container-fluid flex justify-content">
+    <div class="main">
+        <div class="title">
+            <h3>我的视频</h3>
+            <a href="/me/videos/create" class="btn btn-primary">添加</a>
+        </div>
+        <div class="video-list">
+            {{range .Videos}}
+            <div class="card">
+                <img src="{{.Images}}" class="card-img-top" alt="{{.Title}}">
+                <div class="card-body">
+                    <h5 class="card-title">{{.Title}}</h5>
+                    <p class="card-text">{{.Description}}</p>
+
+                    <a href="/me/videos/create/{{.ID}}" class="btn btn-warning">编辑</a>
+                    <button id="del" data-id="{{.ID}}" class="btn btn-danger">删除</button>
+
+                    {{if eq .Status 0}}
+                    <button id="transfer" data-id="{{.ID}}" class="btn btn-info">转码</button>
+                    {{else if eq .Status 200}}
+                    <a href="/play/{{.ID}}" class="btn btn-primary">播放</a>
+                    {{end}}
+
+                    <div>
+                        {{if eq .Status 1}}
+                        <p>转码中...</p>
+                        {{else if eq .Status 2}}
+                        <p>转码失败</p>
+                        {{end}}
+                        <p id="msg"></p>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+{{define "js"}}
+<script>
+    $('#transfer').click(function () {
+        let that = $(this)
+        that.attr("disable", true).html('转码中...')
+        let id = that.attr("data-id")
+        $.ajax({
+            url: '/transfer/' + id,
+            type: 'post',
+            success: function (obj) {
+                $('#msg').html(obj)
+            },
+            error: function (ex) {
+                console.log(ex)
+            }
+        });
+    });
+    $('#del').click(function () {
+        let that = $(this)
+        that.attr("disable", true).html('删除中...')
+        let id = that.attr("data-id")
+        $.ajax({
+            url: '/transfer/' + id,
+            type: 'post',
+            success: function (obj) {
+                $('#msg').html(obj)
+            },
+            error: function (ex) {
+                console.log(ex)
+            }
+        });
+    });
+</script>
+{{end}}
+{{template "footer" .}}

@@ -61,6 +61,7 @@ func viladatorRegister(email, username, password string) (*respErrs, bool) {
 }
 
 type respErrs struct {
+	Authorize
 	Summary     string
 	Email       string
 	Username    string
@@ -191,7 +192,7 @@ func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	encoded, err := server.secureCookie.Encode(AuthorizeCookie, &authorize{AuthID: user.ID, AuthName: user.Username})
+	encoded, err := server.secureCookie.Encode(AuthorizeCookie, &Authorize{ID: user.ID, Name: user.Username})
 	if err != nil {
 		errs.Summary = "请求网络错误,请刷新重试(cookie)"
 		renderLogin(w, errs)

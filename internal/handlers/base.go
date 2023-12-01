@@ -14,9 +14,9 @@ const (
 
 type CtxTypeUser string
 
-type authorize struct {
-	AuthID   string `json:"auth_id"`
-	AuthName string `json:"auth_name"`
+type Authorize struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 func genId() string {

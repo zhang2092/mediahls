@@ -1,0 +1,43 @@
+{{template "header" .}}
+<div class="container-fluid flex justify-content">
+    <div class="main">
+        <div class="title">
+            <h3>视频转码</h3>
+        </div>
+        <div>
+            <h5>{{.Video.Title}}</h5>
+            <p>{{.Video.Description}}</p>
+            <p><img src="{{.Video.Images}}" width="120px" /></p>
+            {{if eq .Video.Status 0}}
+            <p>该视频需要转码才能播放</p>
+            <button id="transfer" class="btn btn-primary">转码</button>
+            {{else if eq .Video.Status 1}}
+            <p>转码中...</p>
+            {{else if eq .Video.Status 2}}
+            <p>转码失败, 请联系管理员</p>
+            {{else if eq .Video.Status 200}}
+            <p>恭喜您, 转码成功!</p>
+            {{end}}
+            <p id="msg"></p>
+        </div>
+    </div>
+</div>
+{{define "js"}}
+<script>
+    $('#transfer').click(function () {
+        let that = $(this)
+        that.attr("disable", true).html('转码中...')
+        $.ajax({
+            url: '/transfer/{{.Video.ID}}',
+            type: 'post',
+            success: function (obj) {
+                $('#msg').html(obj)
+             },
+            error: function (ex) { 
+                console.log(ex)
+            }
+        });
+    });
+</script>
+{{end}}
+{{template "footer" .}}

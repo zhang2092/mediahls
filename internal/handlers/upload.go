@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bufio"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -13,17 +15,7 @@ import (
 	"github.com/zhang2092/mediahls/internal/pkg/fileutil"
 )
 
-func (server *Server) uploadView(w http.ResponseWriter, r *http.Request) {
-	user := withUser(r.Context())
-	log.Printf("%v", user)
-	renderUpload(w, nil)
-}
-
-func renderUpload(w http.ResponseWriter, data any) {
-	render(w, data, "web/templates/me/upload.html.tmpl", "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
-}
-
-func (server *Server) upload(w http.ResponseWriter, r *http.Request) {
+func (server *Server) uploadVideo(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	file, fileHeader, err := r.FormFile("file")
@@ -56,7 +48,8 @@ func (server *Server) upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dir := path.Join("upload", time.Now().Format("20060102"))
+	curTime := time.Now()
+	dir := path.Join("upload", "files", curTime.Format("2006"), curTime.Format("01"), curTime.Format("02"))
 	exist, _ := fileutil.PathExists(dir)
 	if !exist {
 		err := os.MkdirAll(dir, os.ModePerm)
@@ -84,6 +77,60 @@ func (server *Server) upload(w http.ResponseWriter, r *http.Request) {
 	_, err = io.Copy(f, file)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write([]byte("/" + filePath))
+	if err != nil {
+		log.Printf("%v", err)
+	}
+}
+
+func (server *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(r.Body)
+
+	_, fh, err := r.FormFile("file")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err = w.Write([]byte(err.Error()))
+		if err != nil {
+			log.Printf("%v", err)
+		}
+		return
+	}
+
+	f, err := fh.Open()
+	if err != nil {
+		log.Printf("%v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		_, err = w.Write([]byte("读取图片失败"))
+		if err != nil {
+			log.Printf("%v", err)
+		}
+		return
+	}
+	reader := bufio.NewReader(f)
+	filePath, err := fileutil.UploadImage(reader)
+	if errors.Is(err, fileutil.ErrUnsupportedFileFormat) {
+		log.Printf("%v", err)
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		_, err = w.Write([]byte(fileutil.ErrUnsupportedFileFormat.Error()))
+		if err != nil {
+			log.Printf("%v", err)
+		}
+		return
+	}
+
+	if err != nil {
+		log.Printf("%v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		_, err = w.Write([]byte(err.Error()))
+		if err != nil {
+			log.Printf("%v", err)
+		}
 		return
 	}
 

@@ -21,11 +21,14 @@
                 HLS流媒体
             </a>
             <ul class="flex oauth">
-                {{if .AuthID}}
-                <li>
-                    欢迎您: {{.AuthName}}
+                {{if .Authorize.ID}}
+                <li style="font-size: 12px;">
+                    欢迎您: {{.Authorize.Name}}
                 </li>
-                <li>
+                <li style="font-size: 12px;">
+                  <a href="/me/videos">我的视频</a>
+                </li>
+                <li style="font-size: 12px;">
                     <a href="/logout" class="btn btn-primary btn-sm">退出</a>
                 </li>
                 {{else}}

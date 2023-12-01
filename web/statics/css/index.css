@@ -1,5 +1,11 @@
 @charset "utf-8";
 
+html,
+body {
+    /* 禁用空格键的滚动 */
+    scroll-behavior: auto;
+}
+
 .flex {
     display: flex;
 }
@@ -22,7 +28,7 @@
 
 .navbar-wh {
     padding: 0.2rem 1.6rem;
-    border-bottom: 1px solid rgba(0,0,0,.12);
+    border-bottom: 1px solid rgba(0, 0, 0, .12);
 }
 
 .navbar-brand-fs {
@@ -54,6 +60,17 @@
     padding-bottom: 60px;
 }
 
+.main .title{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+}
+
+.main .title a{
+    height: 35px;
+}
+
 .tip-box {
     width: 100%;
     background-color: rgb(229, 246, 253);
@@ -68,7 +85,7 @@
     margin-right: 12px;
 }
 
-.tip-box .tip-icon svg{
+.tip-box .tip-icon svg {
     fill: currentColor;
     color: #007bff;
 }
@@ -77,7 +94,18 @@
     letter-spacing: 0.00938em;
     font-size: 13px;
     font-weight: 400;
-    color:rgb(1, 67, 97);
+    color: rgb(1, 67, 97);
     margin-bottom: 0;
     line-height: 24px;
+}
+
+.video-list {
+    display: grid;
+    /*  声明列的宽度  */
+    grid-template-columns: repeat(4, 305px);
+    /*  声明行间距和列间距  */
+    grid-gap: 20px;
+    /*  声明行的高度  */
+    /* grid-template-rows: 360px; */
+    margin-top: 25px;
 }
