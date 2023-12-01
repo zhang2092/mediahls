@@ -3,7 +3,7 @@
     <div class="main">
         <div class="title">
             <h3>我的视频</h3>
-            <a href="/me/videos/create" class="btn btn-primary">添加</a>
+            <a href="/me/videos/update" class="btn btn-primary">添加</a>
         </div>
         <div class="video-list">
             {{range .Videos}}
@@ -13,7 +13,7 @@
                     <h5 class="card-title">{{.Title}}</h5>
                     <p class="card-text">{{.Description}}</p>
 
-                    <a href="/me/videos/create/{{.ID}}" class="btn btn-warning">编辑</a>
+                    <a href="/me/videos/update/{{.ID}}" class="btn btn-warning">编辑</a>
                     <button id="del" data-id="{{.ID}}" class="btn btn-danger">删除</button>
 
                     {{if eq .Status 0}}

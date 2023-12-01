@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -13,18 +12,20 @@ import (
 
 	nanoId "github.com/matoous/go-nanoid"
 	"github.com/zhang2092/mediahls/internal/pkg/fileutil"
+	"github.com/zhang2092/mediahls/internal/pkg/logger"
 )
 
+// data
+
+// uploadVideo 上传视频
 func (server *Server) uploadVideo(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	file, fileHeader, err := r.FormFile("file")
 	if err != nil {
+		logger.Logger.Errorf("upload video receive: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			log.Printf("%v", err)
-		}
+		w.Write([]byte(err.Error()))
 		return
 	}
 	defer file.Close()
@@ -81,12 +82,10 @@ func (server *Server) uploadVideo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write([]byte("/" + filePath))
-	if err != nil {
-		log.Printf("%v", err)
-	}
+	w.Write([]byte("/" + filePath))
 }
 
+// uploadImage 上传图片
 func (server *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
@@ -94,49 +93,33 @@ func (server *Server) uploadImage(w http.ResponseWriter, r *http.Request) {
 
 	_, fh, err := r.FormFile("file")
 	if err != nil {
+		logger.Logger.Errorf("upload image receive: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			log.Printf("%v", err)
-		}
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	f, err := fh.Open()
 	if err != nil {
-		log.Printf("%v", err)
+		logger.Logger.Errorf("upload image read: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		_, err = w.Write([]byte("读取图片失败"))
-		if err != nil {
-			log.Printf("%v", err)
-		}
+		w.Write([]byte("读取图片失败"))
 		return
 	}
 	reader := bufio.NewReader(f)
 	filePath, err := fileutil.UploadImage(reader)
 	if errors.Is(err, fileutil.ErrUnsupportedFileFormat) {
-		log.Printf("%v", err)
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-		_, err = w.Write([]byte(fileutil.ErrUnsupportedFileFormat.Error()))
-		if err != nil {
-			log.Printf("%v", err)
-		}
+		w.Write([]byte(fileutil.ErrUnsupportedFileFormat.Error()))
 		return
 	}
 
 	if err != nil {
-		log.Printf("%v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			log.Printf("%v", err)
-		}
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write([]byte(filePath))
-	if err != nil {
-		log.Printf("%v", err)
-	}
+	w.Write([]byte(filePath))
 }

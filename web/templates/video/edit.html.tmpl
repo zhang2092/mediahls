@@ -6,7 +6,7 @@
             <a href="/me/videos" class="btn btn-primary">返回列表</a>
         </div>
         <div class="col-sm-6 py-md-5 flex flex-column justify-content">
-            <form action="/me/videos/create" method="post">
+            <form action="/me/videos/update" method="post">
                 {{if .ID}}
                 <div class="form-group">
                     <div class="input-group">
@@ -26,8 +26,8 @@
                         <input type="text" name="title" class="form-control" required id="title" value="{{.Title}}"
                             aria-describedby="titleValid">
                     </div>
-                    {{if .TitleErr}}
-                    <small id="titleValid" style="color: #f44336;" class="form-text">{{.TitleErr}}</small>
+                    {{if .TitleMsg}}
+                    <small id="titleValid" style="color: #f44336;" class="form-text">{{.TitleMsg}}</small>
                     {{end}}
                 </div>
                 <div class="form-group">
@@ -37,15 +37,16 @@
                         </div>
                         <input type="file" class="form-control" id="upload_images">
                         <input type="button" class="btn btn-secondary" value="上传" onclick="uploadImage()" />
-                        <input type="hidden" id="images" name="images" required value="{{.Images}}" aria-describedby="imagesValid">
+                        <input type="hidden" id="images" name="images" required value="{{.Images}}"
+                            aria-describedby="imagesValid">
                     </div>
                     <div class="image-box" style="margin-top: 8px;">
                         {{if .Images}}
                         <img width="120px" src="{{.Images}}" />
                         {{end}}
                     </div>
-                    {{if .ImagesErr}}
-                    <small id="imagesValid" style="color: #f44336;" class="form-text">{{.ImagesErr}}</small>
+                    {{if .ImagesMsg}}
+                    <small id="imagesValid" style="color: #f44336;" class="form-text">{{.ImagesMsg}}</small>
                     {{end}}
                 </div>
                 <div class="form-group">
@@ -56,8 +57,8 @@
                         <textarea class="form-control" id="description" name="description" required
                             aria-describedby="descriptionValid" rows="3">{{.Description}}</textarea>
                     </div>
-                    {{if .DescriptionErr}}
-                    <small id="descriptionValid" style="color: #f44336;" class="form-text">{{.DescriptionErr}}</small>
+                    {{if .DescriptionMsg}}
+                    <small id="descriptionValid" style="color: #f44336;" class="form-text">{{.DescriptionMsg}}</small>
                     {{end}}
                 </div>
                 <div class="form-group">
@@ -75,9 +76,30 @@
                         {{end}}
                     </div>
                     <small id="upload_video_msg" style="color: #f44336;" class="form-text">
-                        {{.OriginLinkErr}}
+                        {{.OriginLinkMsg}}
                     </small>
                 </div>
+                {{if eq .Status -1 200}}
+                <div class="form-group">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">状态</span>
+                        </div>
+                        <select id="status" class="form-control" name="status">
+                            {{if eq .Status 200}}
+                            <option value="200" selected>正常</option>
+                            {{else}}
+                            <option value="200">正常</option>
+                            {{end}}
+                            {{if eq .Status -1}}
+                            <option value="-1" selected>下架</option>
+                            {{else}}
+                            <option value="-1">下架</option>
+                            {{end}}
+                        </select>
+                    </div>                    
+                </div>
+                {{end}}
                 <button type="submit" class="btn btn-primary">提交</button>
             </form>
         </div>

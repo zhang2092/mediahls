@@ -10,67 +10,49 @@ import (
 	pwd "github.com/zhang2092/mediahls/internal/pkg/password"
 )
 
+// obj
+
+// registerPageData 注册页面数据
+type registerPageData struct {
+	Authorize
+	Summary     string
+	Email       string
+	EmailMsg    string
+	Username    string
+	UsernameMsg string
+	Password    string
+	PasswordMsg string
+}
+
+// loginPageData 登录页面数据
+type loginPageData struct {
+	Authorize
+	Summary     string
+	Email       string
+	EmailMsg    string
+	Password    string
+	PasswordMsg string
+}
+
+// view
+
+// registerView 注册页面
 func (server *Server) registerView(w http.ResponseWriter, r *http.Request) {
 	// 是否已经登录
 	server.isRedirect(w, r)
 	renderRegister(w, nil)
 }
 
-func renderRegister(w http.ResponseWriter, data any) {
-	renderLayout(w, data, "web/templates/user/register.html.tmpl")
+// loginView 登录页面
+func (server *Server) loginView(w http.ResponseWriter, r *http.Request) {
+	// 是否已经登录
+	server.isRedirect(w, r)
+	renderLogin(w, nil)
 }
 
-// type userResponse struct {
-// 	Username          string    `json:"username"`
-// 	FullName          string    `json:"full_name"`
-// 	Email             string    `json:"email"`
-// 	PasswordChangedAt time.Time `json:"password_changed_at"`
-// 	CreatedAt         time.Time `json:"created_at"`
-// }
+// data
 
-// func newUserResponse(user db.User) userResponse {
-// 	return userResponse{
-// 		Username:  user.Username,
-// 		Email:     user.Email,
-// 		CreatedAt: user.CreatedAt,
-// 	}
-// }
-
-func viladatorRegister(email, username, password string) (*respErrs, bool) {
-	ok := true
-	errs := &respErrs{
-		Email:    email,
-		Username: username,
-		Password: password,
-	}
-
-	if !ValidateRxEmail(email) {
-		errs.EmailErr = "请填写正确的邮箱地址"
-		ok = false
-	}
-	if !ValidateRxUsername(username) {
-		errs.UsernameErr = "名称(6-20,字母,数字)"
-		ok = false
-	}
-	if !ValidatePassword(password) {
-		errs.PasswordErr = "密码(8-20位)"
-		ok = false
-	}
-
-	return errs, ok
-}
-
-type respErrs struct {
-	Authorize
-	Summary     string
-	Email       string
-	Username    string
-	Password    string
-	EmailErr    string
-	UsernameErr string
-	PasswordErr string
-}
-
+// register 注册
 func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -82,9 +64,9 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
-	errs, ok := viladatorRegister(email, username, password)
+	resp, ok := viladatorRegister(email, username, password)
 	if !ok {
-		renderRegister(w, errs)
+		renderRegister(w, resp)
 		return
 	}
 
@@ -104,70 +86,33 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 	_, err = server.store.CreateUser(r.Context(), arg)
 	if err != nil {
 		if server.store.IsUniqueViolation(err) {
-			errs.Summary = "邮箱或名称已经存在"
-			renderRegister(w, errs)
+			resp.Summary = "邮箱或名称已经存在"
+			renderRegister(w, resp)
 			return
 		}
 
-		errs.Summary = "请求网络错误,请刷新重试"
-		renderRegister(w, errs)
+		resp.Summary = "请求网络错误,请刷新重试"
+		renderRegister(w, resp)
 		return
 	}
 
 	http.Redirect(w, r, "/login", http.StatusFound)
-
-	// rsp := newUserResponse(user)
-	// Respond(w, "ok", rsp, http.StatusOK)
 }
 
-func (server *Server) loginView(w http.ResponseWriter, r *http.Request) {
-	// 是否已经登录
-	server.isRedirect(w, r)
-	renderLogin(w, nil)
-}
-
-func renderLogin(w http.ResponseWriter, data any) {
-	renderLayout(w, data, "web/templates/user/login.html.tmpl")
-}
-
-// type loginUserResponse struct {
-// 	AccessToken          string       `json:"access_token"`
-// 	AccessTokenExpiresAt time.Time    `json:"access_token_expires_at"`
-// 	User                 userResponse `json:"user"`
-// }
-
-func viladatorLogin(email, password string) (*respErrs, bool) {
-	ok := true
-	errs := &respErrs{
-		Email:    email,
-		Password: password,
-	}
-
-	if !ValidateRxEmail(email) {
-		errs.EmailErr = "请填写正确的邮箱地址"
-		ok = false
-	}
-	if len(password) == 0 {
-		errs.PasswordErr = "请填写正确的密码"
-		ok = false
-	}
-
-	return errs, ok
-}
-
+// login 登录
 func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if err := r.ParseForm(); err != nil {
-		renderLogin(w, respErrs{Summary: "请求网络错误,请刷新重试"})
+		renderLogin(w, registerPageData{Summary: "请求网络错误,请刷新重试"})
 		return
 	}
 
 	email := r.PostFormValue("email")
 	password := r.PostFormValue("password")
-	errs, ok := viladatorLogin(email, password)
+	resp, ok := viladatorLogin(email, password)
 	if !ok {
-		renderLogin(w, errs)
+		renderLogin(w, resp)
 		return
 	}
 
@@ -175,27 +120,27 @@ func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 	user, err := server.store.GetUserByEmail(ctx, email)
 	if err != nil {
 		if server.store.IsNoRows(sql.ErrNoRows) {
-			errs.Summary = "邮箱或密码错误"
-			renderLogin(w, errs)
+			resp.Summary = "邮箱或密码错误"
+			renderLogin(w, resp)
 			return
 		}
 
-		errs.Summary = "请求网络错误,请刷新重试"
-		renderLogin(w, errs)
+		resp.Summary = "请求网络错误,请刷新重试"
+		renderLogin(w, resp)
 		return
 	}
 
 	err = pwd.BcryptComparePassword(user.HashedPassword, password)
 	if err != nil {
-		errs.Summary = "邮箱或密码错误"
-		renderLogin(w, errs)
+		resp.Summary = "邮箱或密码错误"
+		renderLogin(w, resp)
 		return
 	}
 
 	encoded, err := server.secureCookie.Encode(AuthorizeCookie, &Authorize{ID: user.ID, Name: user.Username})
 	if err != nil {
-		errs.Summary = "请求网络错误,请刷新重试(cookie)"
-		renderLogin(w, errs)
+		resp.Summary = "请求网络错误,请刷新重试(cookie)"
+		renderLogin(w, resp)
 		return
 	}
 
@@ -204,7 +149,65 @@ func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+// logout 退出
 func (server *Server) logout(w http.ResponseWriter, r *http.Request) {
 	cookie.DeleteCookie(w, cookie.AuthorizeName)
 	http.Redirect(w, r, "/login", http.StatusFound)
+}
+
+// method
+
+// renderRegister 渲染注册页面
+func renderRegister(w http.ResponseWriter, data any) {
+	renderLayout(w, data, "web/templates/user/register.html.tmpl")
+}
+
+// renderLogin 渲染登录页面
+func renderLogin(w http.ResponseWriter, data any) {
+	renderLayout(w, data, "web/templates/user/login.html.tmpl")
+}
+
+// viladatorRegister 校验注册数据
+func viladatorRegister(email, username, password string) (registerPageData, bool) {
+	ok := true
+	resp := registerPageData{
+		Email:    email,
+		Username: username,
+		Password: password,
+	}
+
+	if !ValidateRxEmail(email) {
+		resp.EmailMsg = "请填写正确的邮箱地址"
+		ok = false
+	}
+	if !ValidateRxUsername(username) {
+		resp.UsernameMsg = "名称(6-20,字母,数字)"
+		ok = false
+	}
+	if !ValidatePassword(password) {
+		resp.PasswordMsg = "密码(8-20位)"
+		ok = false
+	}
+
+	return resp, ok
+}
+
+// viladatorLogin 校验登录数据
+func viladatorLogin(email, password string) (loginPageData, bool) {
+	ok := true
+	errs := loginPageData{
+		Email:    email,
+		Password: password,
+	}
+
+	if !ValidateRxEmail(email) {
+		errs.EmailMsg = "请填写正确的邮箱地址"
+		ok = false
+	}
+	if len(password) == 0 {
+		errs.PasswordMsg = "请填写正确的密码"
+		ok = false
+	}
+
+	return errs, ok
 }

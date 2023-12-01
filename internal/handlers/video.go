@@ -15,18 +15,48 @@ import (
 	"github.com/zhang2092/mediahls/internal/pkg/logger"
 )
 
-type playData struct {
+// obj
+
+// videoPageData 播放页面数据
+type videoPageData struct {
 	Authorize
-	Url   string
 	Video db.Video
 }
 
-func (server *Server) play(w http.ResponseWriter, r *http.Request) {
+// videosPageData 视频列表数据
+type videosPageData struct {
+	Authorize
+	Videos []db.Video
+}
+
+// videoEditPageData 视频编辑数据
+type videoEditPageData struct {
+	Authorize
+	Summary        string
+	ID             string
+	IDMsg          string
+	Title          string
+	TitleMsg       string
+	Images         string
+	ImagesMsg      string
+	Description    string
+	DescriptionMsg string
+	OriginLink     string
+	OriginLinkMsg  string
+	Status         int
+	StatusMsg      string
+}
+
+// view
+
+// videoView 视频播放页面
+func (server *Server) videoView(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	xid := vars["xid"]
-	video, _ := server.store.GetVideo(r.Context(), xid)
-	data := playData{
-		Video: video,
+	data := videoPageData{}
+	video, err := server.store.GetVideo(r.Context(), xid)
+	if err == nil {
+		data.Video = video
 	}
 	auth, err := server.withCookie(r)
 	if err == nil {
@@ -35,59 +65,10 @@ func (server *Server) play(w http.ResponseWriter, r *http.Request) {
 	renderLayout(w, data, "web/templates/video/play.html.tmpl")
 }
 
-/*
-// 直接播放mp4
-video, err := os.Open("web/statics/git.mp4")
-if err != nil {
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte("failed to open file"))
-	return
-}
-defer video.Close()
-
-http.ServeContent(w, r, "git", time.Now(), video)
-*/
-
-func (server *Server) stream(response http.ResponseWriter, request *http.Request) {
-	vars := mux.Vars(request)
-	mId := vars["xid"]
-	segName, ok := vars["segName"]
-	if !ok {
-		mediaBase := getMediaBase(mId)
-		m3u8Name := "index.m3u8"
-		serveHlsM3u8(response, request, mediaBase, m3u8Name)
-	} else {
-		mediaBase := getMediaBase(mId)
-		serveHlsTs(response, request, mediaBase, segName)
-	}
-}
-
-func getMediaBase(mId string) string {
-	mediaRoot := "media"
-	return fmt.Sprintf("%s/%s", mediaRoot, mId)
-}
-
-func serveHlsM3u8(w http.ResponseWriter, r *http.Request, mediaBase, m3u8Name string) {
-	mediaFile := fmt.Sprintf("%s/%s", mediaBase, m3u8Name)
-	http.ServeFile(w, r, mediaFile)
-	w.Header().Set("Content-Type", "application/x-mpegURL")
-
-}
-
-func serveHlsTs(w http.ResponseWriter, r *http.Request, mediaBase, segName string) {
-	mediaFile := fmt.Sprintf("%s/%s", mediaBase, segName)
-	http.ServeFile(w, r, mediaFile)
-	w.Header().Set("Content-Type", "video/MP2T")
-}
-
-type meVideoData struct {
-	Authorize
-	Videos []db.Video
-}
-
+// videosView 视频列表页面
 func (server *Server) videosView(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	data := meVideoData{
+	data := videosPageData{
 		Authorize: withUser(ctx),
 	}
 
@@ -111,13 +92,14 @@ func (server *Server) videosView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	renderLayout(w, data, "web/templates/me/videos.html.tmpl")
+	renderLayout(w, data, "web/templates/video/videos.html.tmpl")
 }
 
-func (server *Server) createVideoView(w http.ResponseWriter, r *http.Request) {
+// editVideoView 视频编辑页面
+func (server *Server) editVideoView(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	xid := vars["xid"]
-	vm := videoCreateResp{
+	vm := videoEditPageData{
 		Authorize: withUser(r.Context()),
 	}
 	if len(xid) > 0 {
@@ -130,79 +112,38 @@ func (server *Server) createVideoView(w http.ResponseWriter, r *http.Request) {
 			vm.Status = int(v.Status)
 		}
 	}
-	renderCreateVideo(w, vm)
+	renderEditVideo(w, vm)
 }
 
-func renderCreateVideo(w http.ResponseWriter, data any) {
-	renderLayout(w, data, "web/templates/video/edit.html.tmpl")
+// data
+
+// stream 视频HLS播放处理
+func (server *Server) stream(response http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	mId := vars["xid"]
+	segName, ok := vars["segName"]
+	if !ok {
+		mediaBase := getMediaBase(mId)
+		m3u8Name := "index.m3u8"
+		serveHlsM3u8(response, request, mediaBase, m3u8Name)
+	} else {
+		mediaBase := getMediaBase(mId)
+		serveHlsTs(response, request, mediaBase, segName)
+	}
 }
 
-type videoCreateResp struct {
-	Authorize
-	Summary        string
-	ID             string
-	IDErr          string
-	Title          string
-	TitleErr       string
-	Images         string
-	ImagesErr      string
-	Description    string
-	DescriptionErr string
-	OriginLink     string
-	OriginLinkErr  string
-	Status         int
-	StatusErr      string
-}
-
-func viladatorCreateVedio(r *http.Request) (*videoCreateResp, bool) {
-	ok := true
-	status, _ := strconv.Atoi(r.PostFormValue("status"))
-	errs := &videoCreateResp{
-		Authorize:   withUser(r.Context()),
-		ID:          r.PostFormValue("id"),
-		Title:       r.PostFormValue("title"),
-		Images:      r.PostFormValue("images"),
-		Description: r.PostFormValue("description"),
-		OriginLink:  r.PostFormValue("origin_link"),
-		Status:      status,
-	}
-
-	if len(errs.Title) == 0 {
-		errs.TitleErr = "请填写正确的标题"
-		ok = false
-	}
-
-	exist, _ := fileutil.PathExists(strings.TrimPrefix(errs.Images, "/"))
-	if !exist {
-		errs.ImagesErr = "请先上传图片"
-		ok = false
-	}
-
-	if len(errs.Description) == 0 {
-		errs.DescriptionErr = "请填写描述"
-		ok = false
-	}
-
-	exist, _ = fileutil.PathExists(strings.TrimPrefix(errs.OriginLink, "/"))
-	if !exist {
-		errs.OriginLinkErr = "请先上传视频"
-		ok = false
-	}
-
-	return errs, ok
-}
-
-func (server *Server) createVideo(w http.ResponseWriter, r *http.Request) {
+// editVideo 视频编辑
+func (server *Server) editVideo(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if err := r.ParseForm(); err != nil {
-		renderCreateVideo(w, videoCreateResp{Summary: "请求网络错误, 请刷新重试"})
+		renderEditVideo(w, videoEditPageData{Summary: "请求网络错误, 请刷新重试"})
 		return
 	}
 
-	vm, ok := viladatorCreateVedio(r)
+	vm, ok := viladatorEditVedio(r)
 	if !ok {
-		renderCreateVideo(w, vm)
+		renderEditVideo(w, vm)
 		return
 	}
 
@@ -222,22 +163,34 @@ func (server *Server) createVideo(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			vm.Summary = "添加视频失败"
-			renderCreateVideo(w, vm)
+			renderEditVideo(w, vm)
 			return
 		}
 	} else {
-		_, err := server.store.UpdateVideo(ctx, db.UpdateVideoParams{
+		v, err := server.store.GetVideo(ctx, vm.ID)
+		if err != nil {
+			vm.Summary = "视频数据错误"
+			renderEditVideo(w, vm)
+			return
+		}
+
+		var sta int32 = int32(vm.Status)
+		if sta != -1 && sta != 200 {
+			sta = v.Status
+		}
+
+		_, err = server.store.UpdateVideo(ctx, db.UpdateVideoParams{
 			ID:          vm.ID,
 			Title:       vm.Title,
 			Description: vm.Description,
 			Images:      vm.Images,
-			Status:      int32(vm.Status),
+			Status:      sta,
 			UpdateAt:    curTime,
 			UpdateBy:    u.Name,
 		})
 		if err != nil {
 			vm.Summary = "更新视频失败"
-			renderCreateVideo(w, vm)
+			renderEditVideo(w, vm)
 			return
 		}
 	}
@@ -245,25 +198,7 @@ func (server *Server) createVideo(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/me/videos", http.StatusFound)
 }
 
-type transferData struct {
-	Authorize
-	Video db.Video
-}
-
-func (server *Server) transferView(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	xid := vars["xid"]
-	v, _ := server.store.GetVideo(r.Context(), xid)
-	data := transferData{
-		Video: v,
-	}
-	u, err := server.withCookie(r)
-	if err == nil {
-		data.Authorize = *u
-	}
-	renderLayout(w, data, "web/templates/video/transfer.html.tmpl")
-}
-
+// transfer 视频转码
 func (server *Server) transfer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	xid := vars["xid"]
@@ -318,3 +253,82 @@ func (server *Server) transfer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("视频正在转码中, 请稍后刷新页面"))
 }
+
+// method
+
+// renderEditVideo 渲染视频编辑页面
+func renderEditVideo(w http.ResponseWriter, data any) {
+	renderLayout(w, data, "web/templates/video/edit.html.tmpl")
+}
+
+// viladatorEditVedio 检验视频编辑数据
+func viladatorEditVedio(r *http.Request) (videoEditPageData, bool) {
+	ok := true
+	status, _ := strconv.Atoi(r.PostFormValue("status"))
+	resp := videoEditPageData{
+		Authorize:   withUser(r.Context()),
+		ID:          r.PostFormValue("id"),
+		Title:       r.PostFormValue("title"),
+		Images:      r.PostFormValue("images"),
+		Description: r.PostFormValue("description"),
+		OriginLink:  r.PostFormValue("origin_link"),
+		Status:      status,
+	}
+
+	if len(resp.Title) == 0 {
+		resp.TitleMsg = "请填写正确的标题"
+		ok = false
+	}
+
+	exist, _ := fileutil.PathExists(strings.TrimPrefix(resp.Images, "/"))
+	if !exist {
+		resp.ImagesMsg = "请先上传图片"
+		ok = false
+	}
+
+	if len(resp.Description) == 0 {
+		resp.DescriptionMsg = "请填写描述"
+		ok = false
+	}
+
+	exist, _ = fileutil.PathExists(strings.TrimPrefix(resp.OriginLink, "/"))
+	if !exist {
+		resp.OriginLinkMsg = "请先上传视频"
+		ok = false
+	}
+
+	return resp, ok
+}
+
+// getMediaBase 获取视频m3u8文件路径
+func getMediaBase(mId string) string {
+	mediaRoot := "media"
+	return fmt.Sprintf("%s/%s", mediaRoot, mId)
+}
+
+// serveHlsM3u8 返回m3u8文件
+func serveHlsM3u8(w http.ResponseWriter, r *http.Request, mediaBase, m3u8Name string) {
+	mediaFile := fmt.Sprintf("%s/%s", mediaBase, m3u8Name)
+	http.ServeFile(w, r, mediaFile)
+	w.Header().Set("Content-Type", "application/x-mpegURL")
+}
+
+// serveHlsTs 返回ts文件
+func serveHlsTs(w http.ResponseWriter, r *http.Request, mediaBase, segName string) {
+	mediaFile := fmt.Sprintf("%s/%s", mediaBase, segName)
+	http.ServeFile(w, r, mediaFile)
+	w.Header().Set("Content-Type", "video/MP2T")
+}
+
+/*
+// 直接播放mp4
+video, err := os.Open("web/statics/git.mp4")
+if err != nil {
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte("failed to open file"))
+	return
+}
+defer video.Close()
+
+http.ServeContent(w, r, "git", time.Now(), video)
+*/

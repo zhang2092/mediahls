@@ -8,16 +8,22 @@ import (
 	"github.com/zhang2092/mediahls/internal/db"
 )
 
-type pageData struct {
+// obj
+
+// homePageData 首页数据
+type homePageData struct {
 	Authorize
 	Videos []db.Video
 }
 
-func (server *Server) home(w http.ResponseWriter, r *http.Request) {
-	pd := pageData{}
+// view
+
+// home 首页
+func (server *Server) homeView(w http.ResponseWriter, r *http.Request) {
+	data := homePageData{}
 	auth, err := server.withCookie(r)
 	if err == nil {
-		pd.Authorize = *auth
+		data.Authorize = *auth
 	}
 
 	ctx := r.Context()
@@ -32,12 +38,9 @@ func (server *Server) home(w http.ResponseWriter, r *http.Request) {
 				item.Description = temp
 				log.Println(item.Description)
 			}
-			pd.Videos = append(pd.Videos, item)
+			data.Videos = append(data.Videos, item)
 		}
 	}
-	renderHome(w, pd)
-}
 
-func renderHome(w http.ResponseWriter, data any) {
 	renderLayout(w, data, "web/templates/home.html.tmpl")
 }

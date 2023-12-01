@@ -62,23 +62,25 @@ func (server *Server) setupRouter() {
 	router.HandleFunc("/login", server.loginView).Methods(http.MethodGet)
 	router.HandleFunc("/login", server.login).Methods(http.MethodPost)
 	router.HandleFunc("/logout", server.logout).Methods(http.MethodGet)
-	router.HandleFunc("/", server.home).Methods(http.MethodGet)
-	router.HandleFunc("/play/{xid}", server.play).Methods(http.MethodGet)
+
+	router.HandleFunc("/", server.homeView).Methods(http.MethodGet)
+
+	router.HandleFunc("/play/{xid}", server.videoView).Methods(http.MethodGet)
 	router.HandleFunc("/media/{xid}/stream/", server.stream).Methods(http.MethodGet)
 	router.HandleFunc("/media/{xid}/stream/{segName:index[0-9]+.ts}", server.stream).Methods(http.MethodGet)
 
 	subRouter := router.PathPrefix("/").Subrouter()
 	subRouter.Use(server.authorizeMiddleware)
+
 	subRouter.HandleFunc("/me/videos", server.videosView).Methods(http.MethodGet)
 	subRouter.HandleFunc("/me/videos/p{page}", server.videosView).Methods(http.MethodGet)
-
-	subRouter.HandleFunc("/me/videos/create", server.createVideoView).Methods(http.MethodGet)
-	subRouter.HandleFunc("/me/videos/create/{xid}", server.createVideoView).Methods(http.MethodGet)
-	subRouter.HandleFunc("/me/videos/create", server.createVideo).Methods(http.MethodPost)
+	subRouter.HandleFunc("/me/videos/update", server.editVideoView).Methods(http.MethodGet)
+	subRouter.HandleFunc("/me/videos/update/{xid}", server.editVideoView).Methods(http.MethodGet)
+	subRouter.HandleFunc("/me/videos/update", server.editVideo).Methods(http.MethodPost)
 
 	subRouter.HandleFunc("/upload_image", server.uploadImage).Methods(http.MethodPost)
 	subRouter.HandleFunc("/upload_file", server.uploadVideo).Methods(http.MethodPost)
-	subRouter.HandleFunc("/transfer/{xid}", server.transferView).Methods(http.MethodGet)
+
 	subRouter.HandleFunc("/transfer/{xid}", server.transfer).Methods(http.MethodPost)
 
 	server.router = router

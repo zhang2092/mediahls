@@ -33,14 +33,13 @@ func (server *Server) authorizeMiddleware(next http.Handler) http.Handler {
 func (server *Server) withCookie(r *http.Request) (*Authorize, error) {
 	cookie, err := r.Cookie(AuthorizeCookie)
 	if err != nil {
-		log.Printf("get cookie: %v", err)
 		return nil, err
 	}
 
 	u := &Authorize{}
 	err = server.secureCookie.Decode(AuthorizeCookie, cookie.Value, u)
 	if err != nil {
-		log.Printf("secure decode cookie: %v", err)
+		// log.Printf("secure decode cookie: %v", err)
 		return nil, err
 	}
 
