@@ -32,7 +32,7 @@ func (server *Server) play(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		data.Authorize = *auth
 	}
-	render(w, data, "web/templates/video/play.html.tmpl", "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
+	renderLayout(w, data, "web/templates/video/play.html.tmpl")
 }
 
 /*
@@ -111,7 +111,7 @@ func (server *Server) videosView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	render(w, data, "web/templates/me/videos.html.tmpl", "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
+	renderLayout(w, data, "web/templates/me/videos.html.tmpl")
 }
 
 func (server *Server) createVideoView(w http.ResponseWriter, r *http.Request) {
@@ -134,7 +134,7 @@ func (server *Server) createVideoView(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderCreateVideo(w http.ResponseWriter, data any) {
-	render(w, data, "web/templates/video/edit.html.tmpl", "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
+	renderLayout(w, data, "web/templates/video/edit.html.tmpl")
 }
 
 type videoCreateResp struct {
@@ -261,7 +261,7 @@ func (server *Server) transferView(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		data.Authorize = *u
 	}
-	render(w, data, "web/templates/video/transfer.html.tmpl", "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
+	renderLayout(w, data, "web/templates/video/transfer.html.tmpl")
 }
 
 func (server *Server) transfer(w http.ResponseWriter, r *http.Request) {

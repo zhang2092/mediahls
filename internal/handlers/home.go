@@ -39,5 +39,5 @@ func (server *Server) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderHome(w http.ResponseWriter, data any) {
-	render(w, data, "web/templates/home.html.tmpl", "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
+	renderLayout(w, data, "web/templates/home.html.tmpl")
 }

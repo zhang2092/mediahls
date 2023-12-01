@@ -17,7 +17,7 @@ func (server *Server) registerView(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderRegister(w http.ResponseWriter, data any) {
-	render(w, data, "web/templates/user/register.html.tmpl", "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
+	renderLayout(w, data, "web/templates/user/register.html.tmpl")
 }
 
 // type userResponse struct {
@@ -127,7 +127,7 @@ func (server *Server) loginView(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderLogin(w http.ResponseWriter, data any) {
-	render(w, data, "web/templates/user/login.html.tmpl", "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
+	renderLayout(w, data, "web/templates/user/login.html.tmpl")
 }
 
 // type loginUserResponse struct {
