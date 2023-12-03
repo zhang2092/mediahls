@@ -77,6 +77,7 @@ func (server *Server) setupRouter() {
 	subRouter.HandleFunc("/me/videos/update", server.editVideoView).Methods(http.MethodGet)
 	subRouter.HandleFunc("/me/videos/update/{xid}", server.editVideoView).Methods(http.MethodGet)
 	subRouter.HandleFunc("/me/videos/update", server.editVideo).Methods(http.MethodPost)
+	subRouter.HandleFunc("/me/videos/delete", server.deleteVideo).Methods(http.MethodPost)
 
 	subRouter.HandleFunc("/upload_image", server.uploadImage).Methods(http.MethodPost)
 	subRouter.HandleFunc("/upload_file", server.uploadVideo).Methods(http.MethodPost)

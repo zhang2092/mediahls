@@ -58,8 +58,11 @@
         that.attr("disable", true).html('删除中...')
         let id = that.attr("data-id")
         $.ajax({
-            url: '/transfer/' + id,
+            url: '/me/videos/delete',
             type: 'post',
+            contentType: 'application/json',
+            dataType: 'json',
+            data:JSON.stringify({"id": id}),
             success: function (obj) {
                 $('#msg').html(obj)
             },

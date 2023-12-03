@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -45,6 +47,11 @@ type videoEditPageData struct {
 	OriginLinkMsg  string
 	Status         int
 	StatusMsg      string
+}
+
+// videoDeleteRequest 视频删除请求参数
+type videoDeleteRequest struct {
+	ID string `json:"id"`
 }
 
 // view
@@ -196,6 +203,27 @@ func (server *Server) editVideo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/me/videos", http.StatusFound)
+}
+
+// deleteVideo 视频删除
+func (server *Server) deleteVideo(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	var req videoDeleteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	log.Println(req.ID)
+	err := server.store.DeleteVideo(r.Context(), req.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("删除成功"))
 }
 
 // transfer 视频转码
