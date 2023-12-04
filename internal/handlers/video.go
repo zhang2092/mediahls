@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/zhang2092/mediahls/internal/db"
 	"github.com/zhang2092/mediahls/internal/pkg/convert"
@@ -29,14 +27,12 @@ type videoPageData struct {
 // videosPageData 视频列表数据
 type videosPageData struct {
 	Authorize
-	CSRFField template.HTML
-	Videos    []db.Video
+	Videos []db.Video
 }
 
 // videoEditPageData 视频编辑数据
 type videoEditPageData struct {
 	Authorize
-	CSRFField      template.HTML
 	Summary        string
 	ID             string
 	IDMsg          string
@@ -72,7 +68,7 @@ func (server *Server) videoView(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		data.Authorize = *auth
 	}
-	renderLayout(w, data, "web/templates/video/play.html.tmpl")
+	renderLayout(w, r, data, "web/templates/video/play.html.tmpl")
 }
 
 // videosView 视频列表页面
@@ -80,7 +76,6 @@ func (server *Server) videosView(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	data := videosPageData{
 		Authorize: withUser(ctx),
-		CSRFField: csrf.TemplateField(r),
 	}
 
 	vars := mux.Vars(r)
@@ -103,7 +98,7 @@ func (server *Server) videosView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	renderLayout(w, data, "web/templates/video/videos.html.tmpl")
+	renderLayout(w, r, data, "web/templates/video/videos.html.tmpl")
 }
 
 // editVideoView 视频编辑页面
@@ -288,15 +283,7 @@ func (server *Server) transfer(w http.ResponseWriter, r *http.Request) {
 
 // renderEditVideo 渲染视频编辑页面
 func renderEditVideo(w http.ResponseWriter, r *http.Request, data any) {
-	if data != nil {
-		res := data.(videoEditPageData)
-		res.CSRFField = csrf.TemplateField(r)
-		renderLayout(w, res, "web/templates/video/edit.html.tmpl")
-	}
-
-	renderLayout(w, videoEditPageData{
-		CSRFField: csrf.TemplateField(r),
-	}, "web/templates/video/edit.html.tmpl")
+	renderLayout(w, r, data, "web/templates/video/edit.html.tmpl")
 }
 
 // viladatorEditVedio 检验视频编辑数据

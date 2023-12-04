@@ -3,7 +3,9 @@ package handlers
 import (
 	"html/template"
 	"net/http"
+	"path/filepath"
 
+	"github.com/gorilla/csrf"
 	"github.com/zhang2092/mediahls/internal/pkg/logger"
 )
 
@@ -24,18 +26,25 @@ import (
 // }
 
 // renderLayout 渲染方法 带框架
-func renderLayout(w http.ResponseWriter, data any, tmpls ...string) {
-	tmpls = append(tmpls, "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
-	t, err := template.ParseFiles(tmpls...)
+func renderLayout(w http.ResponseWriter, r *http.Request, data any, tmpl string) {
+	t := template.New(filepath.Base(tmpl))
+	t = t.Funcs(template.FuncMap{
+		"csrfField": func() template.HTML {
+			return csrf.TemplateField(r)
+		},
+	})
+
+	tpl := template.Must(t.Clone())
+	tpl, err := tpl.ParseFiles(tmpl, "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
 	if err != nil {
-		logger.Logger.Errorf("template parse: %v, %v", tmpls, err)
+		logger.Logger.Errorf("template parse: %s, %v", tmpl, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	err = t.Execute(w, data)
+	err = tpl.Execute(w, data)
 	if err != nil {
-		logger.Logger.Errorf("template execute: %v, %v", tmpls, err)
+		logger.Logger.Errorf("template execute: %s, %v", tmpl, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

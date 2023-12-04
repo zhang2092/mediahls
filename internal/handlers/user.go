@@ -2,11 +2,9 @@ package handlers
 
 import (
 	"database/sql"
-	"html/template"
 	"net/http"
 	"time"
 
-	"github.com/gorilla/csrf"
 	"github.com/zhang2092/mediahls/internal/db"
 	"github.com/zhang2092/mediahls/internal/pkg/cookie"
 	pwd "github.com/zhang2092/mediahls/internal/pkg/password"
@@ -17,7 +15,6 @@ import (
 // registerPageData 注册页面数据
 type registerPageData struct {
 	Authorize
-	CSRFField   template.HTML
 	Summary     string
 	Email       string
 	EmailMsg    string
@@ -30,7 +27,6 @@ type registerPageData struct {
 // loginPageData 登录页面数据
 type loginPageData struct {
 	Authorize
-	CSRFField   template.HTML
 	Summary     string
 	Email       string
 	EmailMsg    string
@@ -163,28 +159,12 @@ func (server *Server) logout(w http.ResponseWriter, r *http.Request) {
 
 // renderRegister 渲染注册页面
 func renderRegister(w http.ResponseWriter, r *http.Request, data any) {
-	if data != nil {
-		res := data.(registerPageData)
-		res.CSRFField = csrf.TemplateField(r)
-		renderLayout(w, res, "web/templates/user/register.html.tmpl")
-	} else {
-		renderLayout(w, registerPageData{
-			CSRFField: csrf.TemplateField(r),
-		}, "web/templates/user/register.html.tmpl")
-	}
+	renderLayout(w, r, data, "web/templates/user/register.html.tmpl")
 }
 
 // renderLogin 渲染登录页面
 func renderLogin(w http.ResponseWriter, r *http.Request, data any) {
-	if data != nil {
-		res := data.(loginPageData)
-		res.CSRFField = csrf.TemplateField(r)
-		renderLayout(w, res, "web/templates/user/login.html.tmpl")
-	} else {
-		renderLayout(w, loginPageData{
-			CSRFField: csrf.TemplateField(r),
-		}, "web/templates/user/login.html.tmpl")
-	}
+	renderLayout(w, r, data, "web/templates/user/login.html.tmpl")
 }
 
 // viladatorRegister 校验注册数据
