@@ -40,14 +40,14 @@ type loginPageData struct {
 func (server *Server) registerView(w http.ResponseWriter, r *http.Request) {
 	// 是否已经登录
 	server.isRedirect(w, r)
-	renderRegister(w, r, nil)
+	server.renderRegister(w, r, nil)
 }
 
 // loginView 登录页面
 func (server *Server) loginView(w http.ResponseWriter, r *http.Request) {
 	// 是否已经登录
 	server.isRedirect(w, r)
-	renderLogin(w, r, nil)
+	server.renderLogin(w, r, nil)
 }
 
 // data
@@ -66,7 +66,7 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 	password := r.PostFormValue("password")
 	resp, ok := viladatorRegister(email, username, password)
 	if !ok {
-		renderRegister(w, r, resp)
+		server.renderRegister(w, r, resp)
 		return
 	}
 
@@ -87,12 +87,12 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if server.store.IsUniqueViolation(err) {
 			resp.Summary = "邮箱或名称已经存在"
-			renderRegister(w, r, resp)
+			server.renderRegister(w, r, resp)
 			return
 		}
 
 		resp.Summary = "请求网络错误,请刷新重试"
-		renderRegister(w, r, resp)
+		server.renderRegister(w, r, resp)
 		return
 	}
 
@@ -104,7 +104,7 @@ func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if err := r.ParseForm(); err != nil {
-		renderLogin(w, r, registerPageData{Summary: "请求网络错误,请刷新重试"})
+		server.renderLogin(w, r, registerPageData{Summary: "请求网络错误,请刷新重试"})
 		return
 	}
 
@@ -112,7 +112,7 @@ func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 	password := r.PostFormValue("password")
 	resp, ok := viladatorLogin(email, password)
 	if !ok {
-		renderLogin(w, r, resp)
+		server.renderLogin(w, r, resp)
 		return
 	}
 
@@ -121,26 +121,26 @@ func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if server.store.IsNoRows(sql.ErrNoRows) {
 			resp.Summary = "邮箱或密码错误"
-			renderLogin(w, r, resp)
+			server.renderLogin(w, r, resp)
 			return
 		}
 
 		resp.Summary = "请求网络错误,请刷新重试"
-		renderLogin(w, r, resp)
+		server.renderLogin(w, r, resp)
 		return
 	}
 
 	err = pwd.BcryptComparePassword(user.HashedPassword, password)
 	if err != nil {
 		resp.Summary = "邮箱或密码错误"
-		renderLogin(w, r, resp)
+		server.renderLogin(w, r, resp)
 		return
 	}
 
 	encoded, err := server.secureCookie.Encode(AuthorizeCookie, &Authorize{ID: user.ID, Name: user.Username})
 	if err != nil {
 		resp.Summary = "请求网络错误,请刷新重试(cookie)"
-		renderLogin(w, r, resp)
+		server.renderLogin(w, r, resp)
 		return
 	}
 
@@ -158,13 +158,13 @@ func (server *Server) logout(w http.ResponseWriter, r *http.Request) {
 // method
 
 // renderRegister 渲染注册页面
-func renderRegister(w http.ResponseWriter, r *http.Request, data any) {
-	renderLayout(w, r, data, "web/templates/user/register.html.tmpl")
+func (server *Server) renderRegister(w http.ResponseWriter, r *http.Request, data any) {
+	server.renderLayout(w, r, data, "user/register.html.tmpl")
 }
 
 // renderLogin 渲染登录页面
-func renderLogin(w http.ResponseWriter, r *http.Request, data any) {
-	renderLayout(w, r, data, "web/templates/user/login.html.tmpl")
+func (server *Server) renderLogin(w http.ResponseWriter, r *http.Request, data any) {
+	server.renderLayout(w, r, data, "user/login.html.tmpl")
 }
 
 // viladatorRegister 校验注册数据

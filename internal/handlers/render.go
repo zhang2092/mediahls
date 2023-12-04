@@ -26,7 +26,7 @@ import (
 // }
 
 // renderLayout 渲染方法 带框架
-func renderLayout(w http.ResponseWriter, r *http.Request, data any, tmpl string) {
+func (server *Server) renderLayout(w http.ResponseWriter, r *http.Request, data any, tmpl string) {
 	t := template.New(filepath.Base(tmpl))
 	t = t.Funcs(template.FuncMap{
 		"csrfField": func() template.HTML {
@@ -35,7 +35,7 @@ func renderLayout(w http.ResponseWriter, r *http.Request, data any, tmpl string)
 	})
 
 	tpl := template.Must(t.Clone())
-	tpl, err := tpl.ParseFiles(tmpl, "web/templates/base/header.html.tmpl", "web/templates/base/footer.html.tmpl")
+	tpl, err := tpl.ParseFS(server.templateFS, tmpl, "base/header.html.tmpl", "base/footer.html.tmpl")
 	if err != nil {
 		logger.Logger.Errorf("template parse: %s, %v", tmpl, err)
 		w.WriteHeader(http.StatusInternalServerError)

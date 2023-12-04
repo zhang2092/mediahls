@@ -42,5 +42,5 @@ func (server *Server) homeView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	renderLayout(w, r, data, "web/templates/home.html.tmpl")
+	server.renderLayout(w, r, data, "home.html.tmpl")
 }

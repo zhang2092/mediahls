@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -22,6 +23,10 @@ import (
 )
 
 type Server struct {
+	templateFS fs.FS
+	staticFS   fs.FS
+	imgFS      fs.FS
+
 	conf         *config.Config
 	router       *mux.Router
 	secureCookie *securecookie.SecureCookie
@@ -30,7 +35,7 @@ type Server struct {
 	tokenMaker token.Maker
 }
 
-func NewServer(conf *config.Config, store db.Store) (*Server, error) {
+func NewServer(templateFS fs.FS, staticFS fs.FS, imgFS fs.FS, conf *config.Config, store db.Store) (*Server, error) {
 	tokenMaker, err := token.NewPasetoMaker(conf.TokenSymmetricKey)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create token maker: %w", err)
@@ -42,6 +47,9 @@ func NewServer(conf *config.Config, store db.Store) (*Server, error) {
 	secureCookie.MaxAge(7200)
 
 	server := &Server{
+		templateFS:   templateFS,
+		staticFS:     staticFS,
+		imgFS:        imgFS,
 		conf:         conf,
 		secureCookie: secureCookie,
 		store:        store,
@@ -55,8 +63,8 @@ func NewServer(conf *config.Config, store db.Store) (*Server, error) {
 func (server *Server) setupRouter() {
 	router := mux.NewRouter()
 	router.Use(mux.CORSMethodMiddleware(router))
-	router.PathPrefix("/statics/").Handler(http.StripPrefix("/statics/", http.FileServer(http.Dir("web/statics"))))
-	router.PathPrefix("/upload/imgs").Handler(http.StripPrefix("/upload/imgs/", http.FileServer(http.Dir("upload/imgs"))))
+	router.PathPrefix("/statics/").Handler(http.StripPrefix("/statics/", http.FileServer(http.FS(server.staticFS))))
+	router.PathPrefix("/upload/imgs").Handler(http.StripPrefix("/upload/imgs/", http.FileServer(http.FS(server.imgFS))))
 
 	csrfMiddleware := csrf.Protect(
 		[]byte(securecookie.GenerateRandomKey(32)),

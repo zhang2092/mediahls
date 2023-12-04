@@ -68,7 +68,7 @@ func (server *Server) videoView(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		data.Authorize = *auth
 	}
-	renderLayout(w, r, data, "web/templates/video/play.html.tmpl")
+	server.renderLayout(w, r, data, "video/play.html.tmpl")
 }
 
 // videosView 视频列表页面
@@ -98,7 +98,7 @@ func (server *Server) videosView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	renderLayout(w, r, data, "web/templates/video/videos.html.tmpl")
+	server.renderLayout(w, r, data, "video/videos.html.tmpl")
 }
 
 // editVideoView 视频编辑页面
@@ -118,7 +118,7 @@ func (server *Server) editVideoView(w http.ResponseWriter, r *http.Request) {
 			vm.Status = int(v.Status)
 		}
 	}
-	renderEditVideo(w, r, vm)
+	server.renderEditVideo(w, r, vm)
 }
 
 // data
@@ -143,13 +143,13 @@ func (server *Server) editVideo(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if err := r.ParseForm(); err != nil {
-		renderEditVideo(w, r, videoEditPageData{Summary: "请求网络错误, 请刷新重试"})
+		server.renderEditVideo(w, r, videoEditPageData{Summary: "请求网络错误, 请刷新重试"})
 		return
 	}
 
 	vm, ok := viladatorEditVedio(r)
 	if !ok {
-		renderEditVideo(w, r, vm)
+		server.renderEditVideo(w, r, vm)
 		return
 	}
 
@@ -169,14 +169,14 @@ func (server *Server) editVideo(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			vm.Summary = "添加视频失败"
-			renderEditVideo(w, r, vm)
+			server.renderEditVideo(w, r, vm)
 			return
 		}
 	} else {
 		v, err := server.store.GetVideo(ctx, vm.ID)
 		if err != nil {
 			vm.Summary = "视频数据错误"
-			renderEditVideo(w, r, vm)
+			server.renderEditVideo(w, r, vm)
 			return
 		}
 
@@ -196,7 +196,7 @@ func (server *Server) editVideo(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			vm.Summary = "更新视频失败"
-			renderEditVideo(w, r, vm)
+			server.renderEditVideo(w, r, vm)
 			return
 		}
 	}
@@ -282,8 +282,8 @@ func (server *Server) transfer(w http.ResponseWriter, r *http.Request) {
 // method
 
 // renderEditVideo 渲染视频编辑页面
-func renderEditVideo(w http.ResponseWriter, r *http.Request, data any) {
-	renderLayout(w, r, data, "web/templates/video/edit.html.tmpl")
+func (server *Server) renderEditVideo(w http.ResponseWriter, r *http.Request, data any) {
+	server.renderLayout(w, r, data, "video/edit.html.tmpl")
 }
 
 // viladatorEditVedio 检验视频编辑数据
