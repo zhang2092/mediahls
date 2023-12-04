@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/csrf"
+	hds "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/zhang2092/mediahls/internal/db"
@@ -70,13 +71,19 @@ func (server *Server) setupRouter() {
 		[]byte(securecookie.GenerateRandomKey(32)),
 		csrf.Secure(false),
 		csrf.HttpOnly(true),
+		csrf.FieldName("csrf_token"),
+		csrf.CookieName("authorize_csrf"),
 	)
 	router.Use(csrfMiddleware)
 
-	router.HandleFunc("/register", server.registerView).Methods(http.MethodGet)
-	router.HandleFunc("/register", server.register).Methods(http.MethodPost)
-	router.HandleFunc("/login", server.loginView).Methods(http.MethodGet)
-	router.HandleFunc("/login", server.login).Methods(http.MethodPost)
+	router.Handle("/register", hds.MethodHandler{
+		http.MethodGet:  http.HandlerFunc(server.registerView),
+		http.MethodPost: http.HandlerFunc(server.register),
+	})
+	router.Handle("/login", hds.MethodHandler{
+		http.MethodGet:  http.HandlerFunc(server.loginView),
+		http.MethodPost: http.HandlerFunc(server.login),
+	})
 	router.HandleFunc("/logout", server.logout).Methods(http.MethodGet)
 
 	router.HandleFunc("/", server.homeView).Methods(http.MethodGet)
@@ -106,7 +113,7 @@ func (server *Server) setupRouter() {
 func (server *Server) Start(db *sql.DB) {
 	srv := &http.Server{
 		Addr:    server.conf.ServerAddress,
-		Handler: server.router,
+		Handler: hds.CompressHandler(server.router),
 	}
 
 	go func() {
