@@ -12,9 +12,11 @@
                 <div class="card-body">
                     <h5 class="card-title">{{.Title}}</h5>
                     <p class="card-text">{{.Description}}</p>
-
+                    
+                    {{if not (eq .Status 1)}}
                     <a href="/me/videos/update/{{.ID}}" class="btn btn-warning">编辑</a>
                     <button id="del" data-id="{{.ID}}" class="btn btn-danger">删除</button>
+                    {{end}}
 
                     {{if eq .Status 0}}
                     <button id="transfer" data-id="{{.ID}}" class="btn btn-info">转码</button>
@@ -64,7 +66,12 @@
             dataType: 'json',
             data:JSON.stringify({"id": id}),
             success: function (obj) {
-                $('#msg').html(obj)
+                if(obj.success){
+                    alert('删除成功');
+                    window.location.reload();
+                }else{
+                    alert('删除失败');
+                }
             },
             error: function (ex) {
                 console.log(ex)

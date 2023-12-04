@@ -211,19 +211,18 @@ func (server *Server) deleteVideo(w http.ResponseWriter, r *http.Request) {
 
 	var req videoDeleteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondErr(w, "参数错误", nil)
 		return
 	}
 
 	log.Println(req.ID)
 	err := server.store.DeleteVideo(r.Context(), req.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		RespondErr(w, "删除失败", nil)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("删除成功"))
+	Respond(w, "删除成功", nil, http.StatusOK)
 }
 
 // transfer 视频转码
