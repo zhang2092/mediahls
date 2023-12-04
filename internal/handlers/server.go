@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/zhang2092/mediahls/internal/db"
@@ -56,6 +57,13 @@ func (server *Server) setupRouter() {
 	router.Use(mux.CORSMethodMiddleware(router))
 	router.PathPrefix("/statics/").Handler(http.StripPrefix("/statics/", http.FileServer(http.Dir("web/statics"))))
 	router.PathPrefix("/upload/imgs").Handler(http.StripPrefix("/upload/imgs/", http.FileServer(http.Dir("upload/imgs"))))
+
+	csrfMiddleware := csrf.Protect(
+		[]byte(securecookie.GenerateRandomKey(32)),
+		csrf.Secure(false),
+		csrf.HttpOnly(true),
+	)
+	router.Use(csrfMiddleware)
 
 	router.HandleFunc("/register", server.registerView).Methods(http.MethodGet)
 	router.HandleFunc("/register", server.register).Methods(http.MethodPost)

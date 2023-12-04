@@ -35,6 +35,9 @@
                 </div>
             </div>
             {{end}}
+            <div class="hidden">
+                {{ .CSRFField }}
+            </div>
         </div>
     </div>
 </div>
@@ -44,9 +47,13 @@
         let that = $(this)
         that.attr("disable", true).html('转码中...')
         let id = that.attr("data-id")
+        let csrfToken = $('input[name="gorilla.csrf.Token"]').val()
         $.ajax({
             url: '/transfer/' + id,
             type: 'post',
+            headers: {
+                "X-CSRF-Token": csrfToken
+            },
             success: function (obj) {
                 $('#msg').html(obj)
             },
@@ -59,9 +66,13 @@
         let that = $(this)
         that.attr("disable", true).html('删除中...')
         let id = that.attr("data-id")
+        let csrfToken = $('input[name="gorilla.csrf.Token"]').val()
         $.ajax({
             url: '/me/videos/delete',
             type: 'post',
+            headers: {
+                "X-CSRF-Token": csrfToken
+            },
             contentType: 'application/json',
             dataType: 'json',
             data:JSON.stringify({"id": id}),

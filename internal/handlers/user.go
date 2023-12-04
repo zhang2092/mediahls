@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"database/sql"
+	"html/template"
 	"net/http"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/zhang2092/mediahls/internal/db"
 	"github.com/zhang2092/mediahls/internal/pkg/cookie"
 	pwd "github.com/zhang2092/mediahls/internal/pkg/password"
@@ -15,6 +17,7 @@ import (
 // registerPageData 注册页面数据
 type registerPageData struct {
 	Authorize
+	CSRFField   template.HTML
 	Summary     string
 	Email       string
 	EmailMsg    string
@@ -27,6 +30,7 @@ type registerPageData struct {
 // loginPageData 登录页面数据
 type loginPageData struct {
 	Authorize
+	CSRFField   template.HTML
 	Summary     string
 	Email       string
 	EmailMsg    string
@@ -40,14 +44,14 @@ type loginPageData struct {
 func (server *Server) registerView(w http.ResponseWriter, r *http.Request) {
 	// 是否已经登录
 	server.isRedirect(w, r)
-	renderRegister(w, nil)
+	renderRegister(w, r, nil)
 }
 
 // loginView 登录页面
 func (server *Server) loginView(w http.ResponseWriter, r *http.Request) {
 	// 是否已经登录
 	server.isRedirect(w, r)
-	renderLogin(w, nil)
+	renderLogin(w, r, nil)
 }
 
 // data
@@ -66,7 +70,7 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 	password := r.PostFormValue("password")
 	resp, ok := viladatorRegister(email, username, password)
 	if !ok {
-		renderRegister(w, resp)
+		renderRegister(w, r, resp)
 		return
 	}
 
@@ -87,12 +91,12 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if server.store.IsUniqueViolation(err) {
 			resp.Summary = "邮箱或名称已经存在"
-			renderRegister(w, resp)
+			renderRegister(w, r, resp)
 			return
 		}
 
 		resp.Summary = "请求网络错误,请刷新重试"
-		renderRegister(w, resp)
+		renderRegister(w, r, resp)
 		return
 	}
 
@@ -104,7 +108,7 @@ func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if err := r.ParseForm(); err != nil {
-		renderLogin(w, registerPageData{Summary: "请求网络错误,请刷新重试"})
+		renderLogin(w, r, registerPageData{Summary: "请求网络错误,请刷新重试"})
 		return
 	}
 
@@ -112,7 +116,7 @@ func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 	password := r.PostFormValue("password")
 	resp, ok := viladatorLogin(email, password)
 	if !ok {
-		renderLogin(w, resp)
+		renderLogin(w, r, resp)
 		return
 	}
 
@@ -121,26 +125,26 @@ func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if server.store.IsNoRows(sql.ErrNoRows) {
 			resp.Summary = "邮箱或密码错误"
-			renderLogin(w, resp)
+			renderLogin(w, r, resp)
 			return
 		}
 
 		resp.Summary = "请求网络错误,请刷新重试"
-		renderLogin(w, resp)
+		renderLogin(w, r, resp)
 		return
 	}
 
 	err = pwd.BcryptComparePassword(user.HashedPassword, password)
 	if err != nil {
 		resp.Summary = "邮箱或密码错误"
-		renderLogin(w, resp)
+		renderLogin(w, r, resp)
 		return
 	}
 
 	encoded, err := server.secureCookie.Encode(AuthorizeCookie, &Authorize{ID: user.ID, Name: user.Username})
 	if err != nil {
 		resp.Summary = "请求网络错误,请刷新重试(cookie)"
-		renderLogin(w, resp)
+		renderLogin(w, r, resp)
 		return
 	}
 
@@ -158,13 +162,29 @@ func (server *Server) logout(w http.ResponseWriter, r *http.Request) {
 // method
 
 // renderRegister 渲染注册页面
-func renderRegister(w http.ResponseWriter, data any) {
-	renderLayout(w, data, "web/templates/user/register.html.tmpl")
+func renderRegister(w http.ResponseWriter, r *http.Request, data any) {
+	if data != nil {
+		res := data.(registerPageData)
+		res.CSRFField = csrf.TemplateField(r)
+		renderLayout(w, res, "web/templates/user/register.html.tmpl")
+	} else {
+		renderLayout(w, registerPageData{
+			CSRFField: csrf.TemplateField(r),
+		}, "web/templates/user/register.html.tmpl")
+	}
 }
 
 // renderLogin 渲染登录页面
-func renderLogin(w http.ResponseWriter, data any) {
-	renderLayout(w, data, "web/templates/user/login.html.tmpl")
+func renderLogin(w http.ResponseWriter, r *http.Request, data any) {
+	if data != nil {
+		res := data.(loginPageData)
+		res.CSRFField = csrf.TemplateField(r)
+		renderLayout(w, res, "web/templates/user/login.html.tmpl")
+	} else {
+		renderLayout(w, loginPageData{
+			CSRFField: csrf.TemplateField(r),
+		}, "web/templates/user/login.html.tmpl")
+	}
 }
 
 // viladatorRegister 校验注册数据

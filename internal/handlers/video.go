@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/zhang2092/mediahls/internal/db"
 	"github.com/zhang2092/mediahls/internal/pkg/convert"
@@ -28,12 +29,14 @@ type videoPageData struct {
 // videosPageData 视频列表数据
 type videosPageData struct {
 	Authorize
-	Videos []db.Video
+	CSRFField template.HTML
+	Videos    []db.Video
 }
 
 // videoEditPageData 视频编辑数据
 type videoEditPageData struct {
 	Authorize
+	CSRFField      template.HTML
 	Summary        string
 	ID             string
 	IDMsg          string
@@ -77,6 +80,7 @@ func (server *Server) videosView(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	data := videosPageData{
 		Authorize: withUser(ctx),
+		CSRFField: csrf.TemplateField(r),
 	}
 
 	vars := mux.Vars(r)
@@ -119,7 +123,7 @@ func (server *Server) editVideoView(w http.ResponseWriter, r *http.Request) {
 			vm.Status = int(v.Status)
 		}
 	}
-	renderEditVideo(w, vm)
+	renderEditVideo(w, r, vm)
 }
 
 // data
@@ -144,13 +148,13 @@ func (server *Server) editVideo(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if err := r.ParseForm(); err != nil {
-		renderEditVideo(w, videoEditPageData{Summary: "请求网络错误, 请刷新重试"})
+		renderEditVideo(w, r, videoEditPageData{Summary: "请求网络错误, 请刷新重试"})
 		return
 	}
 
 	vm, ok := viladatorEditVedio(r)
 	if !ok {
-		renderEditVideo(w, vm)
+		renderEditVideo(w, r, vm)
 		return
 	}
 
@@ -170,14 +174,14 @@ func (server *Server) editVideo(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			vm.Summary = "添加视频失败"
-			renderEditVideo(w, vm)
+			renderEditVideo(w, r, vm)
 			return
 		}
 	} else {
 		v, err := server.store.GetVideo(ctx, vm.ID)
 		if err != nil {
 			vm.Summary = "视频数据错误"
-			renderEditVideo(w, vm)
+			renderEditVideo(w, r, vm)
 			return
 		}
 
@@ -197,7 +201,7 @@ func (server *Server) editVideo(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			vm.Summary = "更新视频失败"
-			renderEditVideo(w, vm)
+			renderEditVideo(w, r, vm)
 			return
 		}
 	}
@@ -215,7 +219,6 @@ func (server *Server) deleteVideo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(req.ID)
 	err := server.store.DeleteVideo(r.Context(), req.ID)
 	if err != nil {
 		RespondErr(w, "删除失败", nil)
@@ -284,8 +287,16 @@ func (server *Server) transfer(w http.ResponseWriter, r *http.Request) {
 // method
 
 // renderEditVideo 渲染视频编辑页面
-func renderEditVideo(w http.ResponseWriter, data any) {
-	renderLayout(w, data, "web/templates/video/edit.html.tmpl")
+func renderEditVideo(w http.ResponseWriter, r *http.Request, data any) {
+	if data != nil {
+		res := data.(videoEditPageData)
+		res.CSRFField = csrf.TemplateField(r)
+		renderLayout(w, res, "web/templates/video/edit.html.tmpl")
+	}
+
+	renderLayout(w, videoEditPageData{
+		CSRFField: csrf.TemplateField(r),
+	}, "web/templates/video/edit.html.tmpl")
 }
 
 // viladatorEditVedio 检验视频编辑数据
