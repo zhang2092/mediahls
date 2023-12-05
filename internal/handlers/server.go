@@ -45,7 +45,7 @@ func NewServer(templateFS fs.FS, staticFS fs.FS, imgFS fs.FS, conf *config.Confi
 	hashKey := securecookie.GenerateRandomKey(32)
 	blockKey := securecookie.GenerateRandomKey(32)
 	secureCookie := securecookie.New(hashKey, blockKey)
-	secureCookie.MaxAge(7200)
+	// secureCookie.MaxAge(7200)
 
 	server := &Server{
 		templateFS:   templateFS,

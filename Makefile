@@ -12,6 +12,9 @@ createdb:
 dropdb:
 	docker exec -it postgres dropdb mediahls
 
+psql:
+	docker exec -it postgres psql -U root -d mediahls
+
 migrateinit:
 	migrate create -ext sql -dir internal/db/schema -seq init_schema
 
@@ -30,4 +33,4 @@ test:
 server:
 	go run main.go
 
-.PHONY: network postgres createdb dropdb migrateup migratedown sqlc test server
+.PHONY: network postgres createdb dropdb psql migrateup migratedown sqlc test server
