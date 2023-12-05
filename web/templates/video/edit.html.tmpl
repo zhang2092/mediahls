@@ -109,6 +109,7 @@
 {{define "js"}}
 <script>
     function uploadImage() {
+        let csrfToken = $('input[name="csrf_token"]').val()
         var files = $('#upload_images').prop('files');
         var data = new FormData();
         data.append('file', files[0]);
@@ -120,6 +121,9 @@
             cache: false,
             processData: false,
             contentType: false,
+            headers: {
+                "X-CSRF-Token": csrfToken
+            },
             success: function (res) {
                 $('#images').val(res);
                 $('.image-box').append('<img width="120px" src="' + res + '" />');
@@ -127,6 +131,7 @@
         })
     }
     function uploadVideo() {
+        let csrfToken = $('input[name="csrf_token"]').val()
         var files = $('#upload_video').prop('files');
         var data = new FormData();
         data.append('file', files[0]);
@@ -138,6 +143,9 @@
             cache: false,
             processData: false,
             contentType: false,
+            headers: {
+                "X-CSRF-Token": csrfToken
+            },
             success: function (res) {
                 $('#video').val(res);
                 $('#upload_video_msg').html('上传成功')

@@ -18,9 +18,6 @@ var templateFS embed.FS
 //go:embed web/statics
 var staticFS embed.FS
 
-//go:embed upload/imgs
-var imgFS embed.FS
-
 func main() {
 	// filename, _ := nanoId.Nanoid()
 	// log.Println(filename)
@@ -38,12 +35,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Set up imgs
-	imgs, err := fs.Sub(imgFS, "upload/imgs")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	config, err := config.LoadConfig(".")
 	if err != nil {
 		log.Fatal("cannot load config: ", err)
@@ -57,7 +48,7 @@ func main() {
 	}
 
 	store := db.NewStore(conn)
-	server, err := handlers.NewServer(templates, statics, imgs, config, store)
+	server, err := handlers.NewServer(templates, statics, config, store)
 	if err != nil {
 		log.Fatal("cannot create server: ", err)
 	}

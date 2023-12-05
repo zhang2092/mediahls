@@ -1,0 +1,20 @@
+version: '3.9'
+
+services:
+  mediahls:
+    image: mediahls:0.0.3
+    container_name: mediahls
+    restart: always
+    volumes:
+      - /var/mediahls/app/log:/app/log
+      - /var/mediahls/app/app.env:/app/app.env
+      - /var/mediahls/app/media:/app/media
+      - /var/mediahls/app/upload:/app/upload
+    networks:
+      - media-hls-network
+    ports:
+      - "10050:9090"
+
+networks:
+  media-hls-network:
+    external: true

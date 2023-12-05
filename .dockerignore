@@ -1,0 +1,12 @@
+media/
+upload/
+log/
+
+LICENSE
+
+*.exe
+
+Makefile
+modd.conf
+sqlc.yaml
+docker-compose.yaml
