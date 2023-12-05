@@ -18,21 +18,8 @@ import (
 
 // obj
 
-// videoPageData 播放页面数据
-type videoPageData struct {
-	Authorize
-	Video db.Video
-}
-
-// videosPageData 视频列表数据
-type videosPageData struct {
-	Authorize
-	Videos []db.Video
-}
-
 // videoEditPageData 视频编辑数据
 type videoEditPageData struct {
-	Authorize
 	Summary        string
 	ID             string
 	IDMsg          string
@@ -59,32 +46,23 @@ type videoDeleteRequest struct {
 func (server *Server) videoView(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	xid := vars["xid"]
-	data := videoPageData{}
-	video, err := server.store.GetVideo(r.Context(), xid)
-	if err == nil {
-		data.Video = video
-	}
-	auth, err := server.withCookie(r)
-	if err == nil {
-		data.Authorize = *auth
-	}
-	server.renderLayout(w, r, data, "video/play.html.tmpl")
+	result, _ := server.store.GetVideo(r.Context(), xid)
+	server.renderLayout(w, r, result, "video/play.html.tmpl")
 }
 
 // videosView 视频列表页面
 func (server *Server) videosView(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	data := videosPageData{
-		Authorize: withUser(ctx),
-	}
-
 	vars := mux.Vars(r)
 	page, err := strconv.Atoi(vars["page"])
 	if err != nil {
 		page = 1
 	}
+
+	ctx := r.Context()
+	u := withUser(ctx)
+	var result []db.Video
 	videos, err := server.store.ListVideosByUser(ctx, db.ListVideosByUserParams{
-		UserID: data.Authorize.ID,
+		UserID: u.ID,
 		Limit:  16,
 		Offset: int32((page - 1) * 16),
 	})
@@ -94,28 +72,30 @@ func (server *Server) videosView(w http.ResponseWriter, r *http.Request) {
 				temp := strings.TrimSpace(item.Description[0:65]) + "..."
 				item.Description = temp
 			}
-			data.Videos = append(data.Videos, item)
+			result = append(result, item)
 		}
 	}
 
-	server.renderLayout(w, r, data, "video/videos.html.tmpl")
+	server.renderLayout(w, r, result, "video/videos.html.tmpl")
 }
 
 // editVideoView 视频编辑页面
 func (server *Server) editVideoView(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	xid := vars["xid"]
-	vm := videoEditPageData{
-		Authorize: withUser(r.Context()),
-	}
+	ctx := r.Context()
+	u := withUser(ctx)
+	vm := videoEditPageData{}
 	if len(xid) > 0 {
-		if v, err := server.store.GetVideo(r.Context(), xid); err == nil {
-			vm.ID = v.ID
-			vm.Title = v.Title
-			vm.Images = v.Images
-			vm.Description = v.Description
-			vm.OriginLink = v.OriginLink
-			vm.Status = int(v.Status)
+		if v, err := server.store.GetVideo(ctx, xid); err == nil {
+			if u.ID == v.UserID {
+				vm.ID = v.ID
+				vm.Title = v.Title
+				vm.Images = v.Images
+				vm.Description = v.Description
+				vm.OriginLink = v.OriginLink
+				vm.Status = int(v.Status)
+			}
 		}
 	}
 	server.renderEditVideo(w, r, vm)
@@ -291,7 +271,6 @@ func viladatorEditVedio(r *http.Request) (videoEditPageData, bool) {
 	ok := true
 	status, _ := strconv.Atoi(r.PostFormValue("status"))
 	resp := videoEditPageData{
-		Authorize:   withUser(r.Context()),
 		ID:          r.PostFormValue("id"),
 		Title:       r.PostFormValue("title"),
 		Images:      r.PostFormValue("images"),

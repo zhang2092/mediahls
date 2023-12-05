@@ -14,7 +14,6 @@ import (
 
 // registerPageData 注册页面数据
 type registerPageData struct {
-	Authorize
 	Summary     string
 	Email       string
 	EmailMsg    string
@@ -26,7 +25,6 @@ type registerPageData struct {
 
 // loginPageData 登录页面数据
 type loginPageData struct {
-	Authorize
 	Summary     string
 	Email       string
 	EmailMsg    string

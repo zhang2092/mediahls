@@ -32,6 +32,9 @@ func (server *Server) renderLayout(w http.ResponseWriter, r *http.Request, data 
 		"csrfField": func() template.HTML {
 			return csrf.TemplateField(r)
 		},
+		"currentUser": func() *Authorize {
+			return withUser(r.Context())
+		},
 	})
 
 	tpl := template.Must(t.Clone())

@@ -4,15 +4,14 @@ import (
 	"net/http"
 
 	"github.com/rs/xid"
-	"github.com/zhang2092/mediahls/internal/pkg/cookie"
 )
 
 const (
-	AuthorizeCookie             = "authorize"
-	ContextUser     CtxTypeUser = "context_user"
+	AuthorizeCookie        = "authorize"
+	ContextUser     ctxKey = "context_user"
 )
 
-type CtxTypeUser string
+type ctxKey string
 
 type Authorize struct {
 	ID   string `json:"id"`
@@ -25,13 +24,10 @@ func genId() string {
 }
 
 func (server *Server) isRedirect(w http.ResponseWriter, r *http.Request) {
-	_, err := server.withCookie(r)
-	if err != nil {
-		// 1. 删除cookie
-		cookie.DeleteCookie(w, cookie.AuthorizeName)
+	u := withUser(r.Context())
+	if u != nil {
+		// 已经登录, 直接到首页
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
-
-	// cookie 校验成功
-	http.Redirect(w, r, "/", http.StatusFound)
 }

@@ -75,6 +75,7 @@ func (server *Server) setupRouter() {
 		csrf.CookieName("authorize_csrf"),
 	)
 	router.Use(csrfMiddleware)
+	router.Use(server.setUser)
 
 	router.Handle("/register", hds.MethodHandler{
 		http.MethodGet:  http.HandlerFunc(server.registerView),
@@ -93,7 +94,7 @@ func (server *Server) setupRouter() {
 	router.HandleFunc("/media/{xid}/stream/{segName:index[0-9]+.ts}", server.stream).Methods(http.MethodGet)
 
 	subRouter := router.PathPrefix("/").Subrouter()
-	subRouter.Use(server.authorizeMiddleware)
+	subRouter.Use(server.authorize)
 
 	subRouter.HandleFunc("/me/videos", server.videosView).Methods(http.MethodGet)
 	subRouter.HandleFunc("/me/videos/p{page}", server.videosView).Methods(http.MethodGet)

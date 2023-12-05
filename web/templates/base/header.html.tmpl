@@ -21,9 +21,9 @@
                 HLS流媒体
             </a>
             <ul class="flex oauth">
-                {{if .Authorize.ID}}
+                {{if currentUser}}
                 <li style="font-size: 12px;">
-                    欢迎您: {{.Authorize.Name}}
+                    欢迎您: {{ currentUser.Name }}
                 </li>
                 <li style="font-size: 12px;">
                   <a href="/me/videos">我的视频</a>

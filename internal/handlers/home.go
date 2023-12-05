@@ -8,25 +8,12 @@ import (
 	"github.com/zhang2092/mediahls/internal/db"
 )
 
-// obj
-
-// homePageData 首页数据
-type homePageData struct {
-	Authorize
-	Videos []db.Video
-}
-
 // view
 
 // home 首页
 func (server *Server) homeView(w http.ResponseWriter, r *http.Request) {
-	data := homePageData{}
-	auth, err := server.withCookie(r)
-	if err == nil {
-		data.Authorize = *auth
-	}
-
 	ctx := r.Context()
+	var result []db.Video
 	videos, err := server.store.ListVideos(ctx, db.ListVideosParams{
 		Limit:  100,
 		Offset: 0,
@@ -38,9 +25,9 @@ func (server *Server) homeView(w http.ResponseWriter, r *http.Request) {
 				item.Description = temp
 				log.Println(item.Description)
 			}
-			data.Videos = append(data.Videos, item)
+			result = append(result, item)
 		}
 	}
 
-	server.renderLayout(w, r, data, "home.html.tmpl")
+	server.renderLayout(w, r, result, "home.html.tmpl")
 }
