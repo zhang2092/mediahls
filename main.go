@@ -19,10 +19,6 @@ var templateFS embed.FS
 var staticFS embed.FS
 
 func main() {
-	// filename, _ := nanoId.Nanoid()
-	// log.Println(filename)
-	// return
-
 	// Set up templates
 	templates, err := fs.Sub(templateFS, "web/templates")
 	if err != nil {

@@ -89,7 +89,7 @@ func (server *Server) setupRouter() {
 
 	router.HandleFunc("/play/{xid}", server.videoView).Methods(http.MethodGet)
 	router.HandleFunc("/media/{xid}/stream/", server.stream).Methods(http.MethodGet)
-	router.HandleFunc("/media/{xid}/stream/{segName:index[0-9]+.ts}", server.stream).Methods(http.MethodGet)
+	router.HandleFunc("/media/{xid}/stream/{segName:[a-z0-9]+.ts}", server.stream).Methods(http.MethodGet)
 
 	subRouter := router.PathPrefix("/").Subrouter()
 	subRouter.Use(server.authorize)
