@@ -3,6 +3,9 @@ DB_URL=postgresql://root:secret@localhost:5432/mediahls?sslmode=disable
 network:
 	docker network create media-hls-network
 
+redis:
+	docker run --name rd -d -p 6378:6379 redis:7.2.3 --requirepass "secret"
+
 postgres:
 	docker run --name postgres --network media-hls-network -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:16-alpine
 
@@ -33,4 +36,4 @@ test:
 server:
 	go run main.go
 
-.PHONY: network postgres createdb dropdb psql migrateup migratedown sqlc test server
+.PHONY: network redis postgres createdb dropdb psql migrateup migratedown sqlc test server

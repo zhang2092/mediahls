@@ -6,10 +6,12 @@ import (
 	"io/fs"
 	"log"
 
+	"github.com/hibiken/asynq"
 	"github.com/zhang2092/mediahls/internal/db"
 	"github.com/zhang2092/mediahls/internal/handlers"
 	"github.com/zhang2092/mediahls/internal/pkg/config"
 	"github.com/zhang2092/mediahls/internal/pkg/logger"
+	"github.com/zhang2092/mediahls/internal/worker"
 )
 
 //go:embed web/templates
@@ -44,7 +46,15 @@ func main() {
 	}
 
 	store := db.NewStore(conn)
-	server, err := handlers.NewServer(templates, statics, config, store)
+	redisOpt := asynq.RedisClientOpt{
+		Addr:     config.RDSource,
+		Password: config.RDPassowrd,
+		DB:       config.RDIndex,
+	}
+
+	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
+	go runTaskProcessor(redisOpt, store)
+	server, err := handlers.NewServer(templates, statics, config, store, taskDistributor)
 	if err != nil {
 		log.Fatal("cannot create server: ", err)
 	}
@@ -59,4 +69,13 @@ func main() {
 	// }
 
 	// log.Println("ok")
+}
+
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+	log.Printf("task processor start\n")
+	err := taskProcessor.Start()
+	if err != nil {
+		log.Fatal("failed to start task processor: %w", err)
+	}
 }

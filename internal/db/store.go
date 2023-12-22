@@ -14,6 +14,8 @@ type Store interface {
 	IsUniqueViolation(err error) bool
 	IsForeignKeyViolation(err error) bool
 	IsNoRows(err error) bool
+
+	CreateVideoTx(ctx context.Context, arg CreateVideoTxParam) (CreateVideoTxResult, error)
 }
 
 type SQLStore struct {

@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/hibiken/asynq"
 	"github.com/zhang2092/mediahls/internal/db"
 	"github.com/zhang2092/mediahls/internal/pkg/convert"
 	"github.com/zhang2092/mediahls/internal/pkg/fileutil"
 	"github.com/zhang2092/mediahls/internal/pkg/logger"
+	"github.com/zhang2092/mediahls/internal/worker"
 )
 
 // obj
@@ -137,16 +139,30 @@ func (server *Server) editVideo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	u := withUser(ctx)
 	if len(vm.ID) == 0 {
-		_, err := server.store.CreateVideo(ctx, db.CreateVideoParams{
-			ID:          genId(),
-			Title:       vm.Title,
-			Description: vm.Description,
-			Images:      vm.Images,
-			OriginLink:  vm.OriginLink,
-			PlayLink:    "",
-			UserID:      u.ID,
-			CreateBy:    u.Name,
-		})
+		arg := db.CreateVideoTxParam{
+			CreateVideoParams: db.CreateVideoParams{
+				ID:          genId(),
+				Title:       vm.Title,
+				Description: vm.Description,
+				Images:      vm.Images,
+				OriginLink:  vm.OriginLink,
+				PlayLink:    "",
+				UserID:      u.ID,
+				CreateBy:    u.Name,
+			},
+			AfterCreate: func(video db.Video) error {
+				taskPayload := worker.PayloadConvertHLS{
+					Id: video.ID,
+				}
+				opts := []asynq.Option{
+					asynq.MaxRetry(3),
+					asynq.ProcessIn(10 * time.Second),
+					asynq.Queue(worker.QueueCritical),
+				}
+				return server.taskDistributor.DistributeConvertHLS(ctx, &taskPayload, opts...)
+			},
+		}
+		_, err := server.store.CreateVideoTx(ctx, arg)
 		if err != nil {
 			vm.Summary = "添加视频失败"
 			server.renderEditVideo(w, r, vm)
@@ -204,6 +220,8 @@ func (server *Server) deleteVideo(w http.ResponseWriter, r *http.Request) {
 }
 
 // transfer 视频转码
+// 已弃用
+// 在视频添加的时候 同时添加到队列 通过队列去视频转码
 func (server *Server) transfer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	xid := vars["xid"]

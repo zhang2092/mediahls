@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -23,7 +22,6 @@ func (server *Server) homeView(w http.ResponseWriter, r *http.Request) {
 			if len(item.Description) > 65 {
 				temp := strings.TrimSpace(item.Description[0:65]) + "..."
 				item.Description = temp
-				log.Println(item.Description)
 			}
 			result = append(result, item)
 		}

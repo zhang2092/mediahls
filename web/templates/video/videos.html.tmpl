@@ -12,25 +12,24 @@
                 <div class="card-body">
                     <h5 class="card-title">{{.Title}}</h5>
                     <p class="card-text">{{.Description}}</p>
-                    
+
                     {{if not (eq .Status 1)}}
                     <a href="/me/videos/update/{{.ID}}" class="btn btn-warning">编辑</a>
                     <button id="del" data-id="{{.ID}}" class="btn btn-danger">删除</button>
                     {{end}}
 
-                    {{if eq .Status 0}}
-                    <button id="transfer" data-id="{{.ID}}" class="btn btn-info">转码</button>
-                    {{else if eq .Status 200}}
+                    {{if eq .Status 200}}
                     <a href="/play/{{.ID}}" class="btn btn-primary">播放</a>
                     {{end}}
 
                     <div>
                         {{if eq .Status 1}}
+                        <p>等待队列处理...</p>
+                        {{else if eq .Status 1}}
                         <p>转码中...</p>
                         {{else if eq .Status 2}}
                         <p>转码失败</p>
                         {{end}}
-                        <p id="msg"></p>
                     </div>
                 </div>
             </div>
@@ -43,25 +42,6 @@
 </div>
 {{define "js"}}
 <script>
-    $('#transfer').click(function () {
-        let that = $(this)
-        that.attr("disable", true).html('转码中...')
-        let id = that.attr("data-id")
-        let csrfToken = $('input[name="csrf_token"]').val()
-        $.ajax({
-            url: '/transfer/' + id,
-            type: 'post',
-            headers: {
-                "X-CSRF-Token": csrfToken
-            },
-            success: function (obj) {
-                $('#msg').html(obj)
-            },
-            error: function (ex) {
-                console.log(ex)
-            }
-        });
-    });
     $('#del').click(function () {
         let that = $(this)
         that.attr("disable", true).html('删除中...')
@@ -75,12 +55,12 @@
             },
             contentType: 'application/json',
             dataType: 'json',
-            data:JSON.stringify({"id": id}),
+            data: JSON.stringify({ "id": id }),
             success: function (obj) {
-                if(obj.success){
+                if (obj.success) {
                     alert('删除成功');
                     window.location.reload();
-                }else{
+                } else {
                     alert('删除失败');
                 }
             },

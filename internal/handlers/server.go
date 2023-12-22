@@ -21,6 +21,7 @@ import (
 	"github.com/zhang2092/mediahls/internal/pkg/config"
 	"github.com/zhang2092/mediahls/internal/pkg/logger"
 	"github.com/zhang2092/mediahls/internal/pkg/token"
+	"github.com/zhang2092/mediahls/internal/worker"
 )
 
 type Server struct {
@@ -31,11 +32,12 @@ type Server struct {
 	router       *mux.Router
 	secureCookie *securecookie.SecureCookie
 
-	store      db.Store
-	tokenMaker token.Maker
+	store           db.Store
+	tokenMaker      token.Maker
+	taskDistributor worker.TaskDistributor
 }
 
-func NewServer(templateFS fs.FS, staticFS fs.FS, conf *config.Config, store db.Store) (*Server, error) {
+func NewServer(templateFS fs.FS, staticFS fs.FS, conf *config.Config, store db.Store, taskDistributor worker.TaskDistributor) (*Server, error) {
 	tokenMaker, err := token.NewPasetoMaker(conf.TokenSymmetricKey)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create token maker: %w", err)
@@ -47,12 +49,13 @@ func NewServer(templateFS fs.FS, staticFS fs.FS, conf *config.Config, store db.S
 	// secureCookie.MaxAge(7200)
 
 	server := &Server{
-		templateFS:   templateFS,
-		staticFS:     staticFS,
-		conf:         conf,
-		secureCookie: secureCookie,
-		store:        store,
-		tokenMaker:   tokenMaker,
+		templateFS:      templateFS,
+		staticFS:        staticFS,
+		conf:            conf,
+		secureCookie:    secureCookie,
+		store:           store,
+		tokenMaker:      tokenMaker,
+		taskDistributor: taskDistributor,
 	}
 
 	server.setupRouter()
